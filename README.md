@@ -71,74 +71,66 @@ For Kafka persistence, you need to send the: topic_name, server_name. please see
 FILE: The snapshot is saved in a file that restore only the last message, (during the persistent it creates a tmp file in the path directory)
 For File persistence, you need to send the: file_name, path_name  please see File_persist example below
 
+## Installation
+
+drain3 is avaliable from pypi. To install use `pip`:
+
+```pip3 install drain3```
+
+
+
+
 ## Examples
 
-#example - ONLINE DRAIN 
-connect to Drain using :
-This is an example of using Drain with stdin - stdout
-```python
+### Example File_persist
 
-import sys
-import os
-from drain3_main import LogParserMain
+Uses Drain from stdin/out and persist to a snapshot to file.
 
-class LogParserOnline():
-    def __init__(self, persistance_type, path_or_server, file_or_topic):
-        self.log_parser = LogParserMain(persistance_type, path_or_server, file_or_topic)
-
-    def start(self):
-        self.log_parser.start()
-        print("Ready")
-        while True:
-            log_line = input()
-            cluster_json = self.log_parser.add_log_line(log_line)
-            print(cluster_json)
+To experiance with the example execute :
 
 ```
-
-
-
-#example KAFKA_persist
-File persist call the in-memory drain example with KAFKA persist.
-There is an option to read the topc/server from ENV varibels/
-The defaults parameters are: server_name: " "localhost:9092", topic_name: "a"
-
-
-```python
-import os
-from drain3_online import LogParserOnline
-
-env_kafka_servers = "decorus_kafka_servers"
-env_tenant_id = "decorus_tenant_id"
-topic_name_prefix = "template_miner_snapshot_"
-
-servers = os.environ.get(env_kafka_servers, "localhost:9092")
-server_list = servers.split(",")
-tenant_id = os.environ.get(env_tenant_id, "a")
-
-topic = topic_name_prefix + tenant_id
-print("Kafka servers = " + str(server_list) + "\nKafka topic = " + str(topic))
-log_parser = LogParserOnline("KAFKA", server_list, topic) 
-log_parser.start()
-
+cd examples
+python example_drain_online_with_file_persist.py
 ```
 
-#Example File_persist
-File persist call the in-memory drain example with file persist.
- The defaults parameters are:  path: "./examples/", file_name: "snapshot.txt"
-
-
-```python 
-
-import os
-from drain3_online import LogParserOnline
-
-persist_file_name = "snapshot.txt"
-persist_path = "./examples"
-
-log_parser = LogParserOnline("FILE", persist_path, persist_file_name) 
-log_parser.start()
+now enter several log lines using the command line. For example enter:
 
 ```
+10:00 test1
+10:10 test2
+10:20 test2
+10:30 test3
+10:40 test1
+```
+
+stop execution (using ^c) 
+Use `cat snapshot.txt` to explore drain snapshot file that was created.
+
+### example KAFKA_persist
+
+Uses Drain from stdin/out and persist to kafka.
+
+To experiance with the example execute :
+
+```
+cd examples
+python example_drain_online_with_kafka_persist.py
+```
+
+now enter several log lines using the command line. For example enter:
+
+```
+10:00 test1
+10:10 test2
+10:20 test2
+10:30 test3
+10:40 test1
+```
+
+stop execution (using ^c) 
+Use kafka tools to explore the topic `topic_demo_tenant_id`
+
+
+
 
 

@@ -1,0 +1,6 @@
+__pycache__/*
+drain3/__pycache__/*
+MANIFEST
+dist/*
+drain3.egg-info/*
+examples/snapshot.txt

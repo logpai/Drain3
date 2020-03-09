@@ -8,17 +8,16 @@ License     : MIT
 import json
 import time
 import jsonpickle
-import app_config
-from masking import NetworkLogMasker
-from drain3_core import LogParserCore
-import kafka_utils
-import file_persist_utils
-
+from drain3.app_config import sim_th, snapshot_poll_timeout_sec, snapshot_interval_minutes
+from drain3.masking import NetworkLogMasker
+from drain3.drain3_core import LogParserCore
+from drain3.file_persist_utils import persist_to_file,restore_from_file
+from drain3.kafka_utils import kafka_producer, send_to_kafka, restore_from_kafka
 
 class LogParserMain():
 
     def __init__(self, persistance_type, path_or_server, file_or_topic):
-        self.parser = LogParserCore(sim_th=app_config.sim_th)
+        self.parser = LogParserCore(sim_th=sim_th)
         self.masker = NetworkLogMasker()
         self.start_time = None
         self.persistance_type = persistance_type  
@@ -37,19 +36,21 @@ class LogParserMain():
             return
 
     def load_from_kafka(self):
-        self.handler = kafka_utils.kafka_producer(self.path_or_server)
-        self.parser = kafka_utils.restore_from_kafka(self.parser, self.path_or_server, self.file_or_topic)
+        self.handler = kafka_producer(self.path_or_server)
+        self.parser = restore_from_kafka(self.parser, self.path_or_server, self.file_or_topic)
 
     def load_from_file(self):
-        self.parser = file_persist_utils.restore_from_file(self.parser, self.path_or_server, self.file_or_topic)
+        self.parser = restore_from_file(self.parser, self.path_or_server, self.file_or_topic)
+        pass
 
 
     def do_snapshot(self, snapshot_reason):
         if(self.persistance_type == "KAFKA"):
-            kafka_utils.send_to_kafka(self.handler, jsonpickle.dumps(self.parser).encode('utf-8'), self.file_or_topic, snapshot_reason)
+            send_to_kafka(self.handler, jsonpickle.dumps(self.parser).encode('utf-8'), self.file_or_topic, snapshot_reason)
             return 
+            
         if(self.persistance_type == "FILE"):
-            file_persist_utils.persist_to_file(jsonpickle.dumps(self.parser).encode('utf-8'), snapshot_reason, self.path_or_server, self.file_or_topic)
+            persist_to_file(jsonpickle.dumps(self.parser).encode('utf-8'), snapshot_reason, self.path_or_server, self.file_or_topic)
             return
 
     def snapshot_reason(self, parser_cluster_count, old_total_clusters, was_template_updated):
@@ -59,7 +60,7 @@ class LogParserMain():
             snapshot_reason += "new template, "
         if was_template_updated:
             snapshot_reason += "updated template, "
-        if diff_time >= app_config.snapshot_interval_minutes:
+        if diff_time >= snapshot_interval_minutes:
             snapshot_reason += "periodic, "
         return snapshot_reason
 
