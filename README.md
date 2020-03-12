@@ -8,18 +8,17 @@ Read more information about Drain from the following papers:
 Pinjia He, Jieming Zhu, Zibin Zheng, and Michael R. Lyu. Drain: An Online Log Parsing Approach with Fixed Depth Tree, Proceedings of the 24th International Conference on Web Services (ICWS), 2017.
 
 
-This code is upgrade of the Drain code from Python 2.7 to Python 3.6 or later and fix some tiny bugs:
+This code is upgrade of original Drain code from Python 2.7 to Python 3.6 or later and fixs for some minor bugs:
 https://github.com/logpai/logparser/blob/master/logparser/Drain
 
-The main new features in this repository are:
-     - persistence of the drain state to Kafka or to a File.
-     - masking - the aim of the masking property is to mask classified information so it will be hide in the template (for example: IP address)
+### The main new features in this repository are:
+- **persistence** - save drain state to Kafka or file
+- **masking** - mask classified information so it will be hide in the template (for example: IP address)
 
-The input of Drain is a raw log and the output is a JSON with the fields
-  - cluster_id: - the id of the cluster that the raw_log belong to, for example, A0008
-  - cluster_count: The total clusters seen till now
-  - template_mined": The last template of the above cluster_id
-
+### The input of Drain is a raw log and the output is a JSON with the following fields:
+- `cluster_id`: the id of the cluster that the raw_log belong to, for example, A0008
+- `cluster_count`: the total clusters seen till now
+- `template_mined`: the last template of the above cluster_id
 
 - templates can be changed, for example:
 input: aa aa aa
@@ -63,13 +62,13 @@ The snapshot is created in any of the following events:
 - periodic - after X ("snapshot_interval_minutes") from teh last snapshot (this parameter is in the app_cong.py)
 
 
-We support two persistence methods:
+Drain3 supports two persistence methods:
 
-Kafka: The snapshot is saved in a topic that should be used only for the snapshots - the last message in this topic is the last snapshot that will be uploaded after restart.
-For Kafka persistence, you need to send the: topic_name, server_name. please see Kafka_persist example below
+- **Kafka** - The snapshot is saved in a topic that should be used only for the snapshots - the last message in this topic is the last snapshot that will be uploaded after restart.
+For Kafka persistence, you need to provide: `topic_name` and `server_name`. see Kafka_persist example below
 
-FILE: The snapshot is saved in a file that restore only the last message, (during the persistent it creates a tmp file in the path directory)
-For File persistence, you need to send the: file_name, path_name  please see File_persist example below
+- **File** - The snapshot is saved in a file that restore only the last message, (during the persistent it creates a tmp file in the path directory)
+For File persistence, you need to provide: `file_name`, `path_name`. see File_persist example below
 
 ## Examples
 
