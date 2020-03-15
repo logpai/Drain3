@@ -1,7 +1,26 @@
 # Drain3
 ## Introduction
 
-Drain is an online log parser that can parse logs into structured events in a streaming and timely manner. It employs a parse tree with fixed depth to guide the log group search process, which effectively avoids constructing a very deep and unbalanced tree.
+Drain3 is an online log parser that can parse logs into structured events in a streaming and timely manner. It employs a parse tree with fixed depth to guide the log group search process, which effectively avoids constructing a very deep and unbalanced tree.
+
+Drain3 continuously learns and automatically generates "log templates" from raw log entries. As an example for the input:
+
+```
+> 10:00 connect to 10.0.0.1
+> 10:10 connect to 10.0.0.2
+> 10:20 connect to 10.0.0.3
+> 10:30 Hex number 0xDEADBEAF
+> 10:30 Hex number 0x10000
+> 10:40 executed cmd "print"
+> 10:50 executed cmd "sleep"
+```
+Drain3 generates the following templates:
+
+```
+> {"cluster_id": "A0001", "cluster_count": 1, "template_mined": "<NUM>:<NUM> connect to <IP>"}
+> {"cluster_id": "A0002", "cluster_count": 2, "template_mined": "<NUM>:<NUM> Hex number <HEX>"}
+> {"cluster_id": "A0003", "cluster_count": 3, "template_mined": "<NUM>:<NUM> executed cmd <CMD>"}
+```
 
 Read more information about Drain from the following paper:
 
@@ -11,6 +30,8 @@ Read more information about Drain from the following paper:
 This code is upgrade of original Drain code from Python 2.7 to Python 3.6 or later with fixes of some bugs and additional features:
 
 >Note: *Original code can be found here: [https://github.com/logpai/logparser/blob/master/logparser/Drain](https://github.com/logpai/logparser/blob/master/logparser/Drain)*
+
+
 
 ### The main new features in this repository are:
 - **persistence** - save drain state to Kafka or file
@@ -22,12 +43,17 @@ This code is upgrade of original Drain code from Python 2.7 to Python 3.6 or lat
 - `template_mined`: the last template of above cluster_id
 
 - templates are changed over time based on input, for example:
-input: aa aa aa
-output: @@{"cluster_id": "A0012", "cluster_count": 12, "template_mined": "aa aa aa"}
-input: aa aa ab
-output:  @@{"cluster_id":"A0012", "cluster_count": 12, "template_mined": "aa aa <\*>"}
 
->Explanation: *Drain3 learned that the third token is a parameter*   I
+> input: aa aa aa
+>
+> output: @@{"cluster_id": "A0012", "cluster_count": 12, "template_mined": "aa aa aa"}
+>
+> input: aa aa ab
+>
+> output:  @@{"cluster_id":"A0012", "cluster_count": 12, "template_mined": "aa aa <\*>"}
+
+
+**Explanation:** *Drain3 learned that the third token is a parameter*
 
 ## Configuration
 
