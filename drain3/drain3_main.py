@@ -8,31 +8,36 @@ License     : MIT
 import json
 import time
 import jsonpickle
-from drain3.app_config import sim_th, snapshot_poll_timeout_sec, snapshot_interval_minutes
-from drain3.masking import NetworkLogMasker
+from drain3.masking import LogMasker
 from drain3.drain3_core import LogParserCore
-from drain3.file_persist_utils import persist_to_file,restore_from_file
+from drain3.file_persist_utils import persist_to_file, restore_from_file
 from drain3.kafka_utils import kafka_producer, send_to_kafka, restore_from_kafka
+import logging
+import configparser
 
-class LogParserMain():
+logger = logging.getLogger(__name__)
+config = configparser.ConfigParser()
+config.read('drain3.ini')
 
-    def __init__(self, persistance_type, path_or_server, file_or_topic):
-        self.parser = LogParserCore(sim_th=sim_th)
-        self.masker = NetworkLogMasker()
+
+class LogParserMain:
+
+    def __init__(self, persistence_type, path_or_server, file_or_topic):
+        self.parser = LogParserCore(sim_th=float(config.get('DEFAULT', 'sim_th', fallback=0.4)))
+        self.masker = LogMasker()
         self.start_time = None
-        self.persistance_type = persistance_type  
+        self.persistence_type = persistence_type
         self.path_or_server = path_or_server
-        self.file_or_topic = file_or_topic 
+        self.file_or_topic = file_or_topic
         self.handler = None
-
 
     def start(self):
         self.start_time = time.time()
-        if (self.persistance_type == "KAFKA"):
-            self.load_from_kafka();
+        if self.persistence_type == "KAFKA":
+            self.load_from_kafka()
             return
-        if(self.persistance_type == "FILE"):
-            self.load_from_file();
+        if self.persistence_type == "FILE":
+            self.load_from_file()
             return
 
     def load_from_kafka(self):
@@ -43,35 +48,34 @@ class LogParserMain():
         self.parser = restore_from_file(self.parser, self.path_or_server, self.file_or_topic)
         pass
 
-
     def do_snapshot(self, snapshot_reason):
-        if(self.persistance_type == "KAFKA"):
-            send_to_kafka(self.handler, jsonpickle.dumps(self.parser).encode('utf-8'), self.file_or_topic, snapshot_reason)
-            return 
-            
-        if(self.persistance_type == "FILE"):
-            persist_to_file(jsonpickle.dumps(self.parser).encode('utf-8'), snapshot_reason, self.path_or_server, self.file_or_topic)
+        if self.persistence_type == "KAFKA":
+            send_to_kafka(self.handler, jsonpickle.dumps(self.parser).encode('utf-8'), self.file_or_topic,
+                          snapshot_reason)
+            return
+
+        if self.persistence_type == "FILE":
+            persist_to_file(jsonpickle.dumps(self.parser).encode('utf-8'), snapshot_reason, self.path_or_server,
+                            self.file_or_topic)
             return
 
     def snapshot_reason(self, parser_cluster_count, old_total_clusters, was_template_updated):
         snapshot_reason = ""
-        diff_time = time.time() - self.start_time 
+        diff_time = time.time() - self.start_time
         if parser_cluster_count > old_total_clusters:
             snapshot_reason += "new template, "
         if was_template_updated:
             snapshot_reason += "updated template, "
-        if diff_time >= snapshot_interval_minutes:
+        if diff_time >= int(config.get('DEFAULT', 'snapshot_interval_minutes', fallback=1)):
             snapshot_reason += "periodic, "
         return snapshot_reason
 
+    def snapshot_handler(self, parser_cluster_count, cur_total_clusters, was_template_updated):
+        snapshot_reason = self.snapshot_reason(parser_cluster_count, cur_total_clusters, was_template_updated)
+        if snapshot_reason != "":
+            self.do_snapshot(snapshot_reason)
+            self.start_time = time.time()
 
-    def snapshot_handler(self, parser_cluster_count, cur_total_clusters, was_template_updated): 
-            snapshot_reason = self.snapshot_reason(parser_cluster_count, cur_total_clusters, was_template_updated)
-            if snapshot_reason != "":
-                self.do_snapshot(snapshot_reason)
-                self.start_time = time.time()
-
-   
     def add_log_line(self, log_line):
         old_total_clusters = len(self.parser.clusters)
         masked_content = self.masker.mask(log_line)
@@ -79,14 +83,7 @@ class LogParserMain():
         (cluster_dict["cluster_id"], cluster_dict["cluster_count"], cluster_dict["template_mined"],
          was_template_updated) = self.parser.parse_line(masked_content)
         cluster_json = json.dumps(cluster_dict)
-        if (self.persistance_type != ""):
+        if self.persistence_type != "":
             self.snapshot_handler(cluster_dict["cluster_count"], old_total_clusters, was_template_updated)
-        print (cluster_json )
+        logger.info("{0}".format(cluster_json))
         return cluster_json
-
-
-    
-
-
-
-
