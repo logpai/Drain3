@@ -50,7 +50,7 @@ class LogMasker:
     def __init__(self):
         masking_instances = []
         self.masker = None
-        m = json.loads(config.get('DEFAULT', 'masking', fallback=""))
+        m = json.loads(config.get('DEFAULT', 'masking', fallback="[]"))
         for i in range(len(m)):
             logger.info("Adding custom mask {0} --> {1}".format(str(m[i]['mask_with']), str(m[i]['regex_pattern'])))
             masking_instances.append(MaskingInstruction(m[i]['regex_pattern'], m[i]['mask_with']))
