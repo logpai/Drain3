@@ -24,6 +24,7 @@ class LogParserMain:
 
     def __init__(self, persistence_type, path_or_server, file_or_topic):
         self.parser = LogParserCore(sim_th=float(config.get('DEFAULT', 'sim_th', fallback=0.4)))
+        self.snapshot_interval_seconds = int(config.get('DEFAULT', 'snapshot_interval_minutes', fallback=1)) * 60
         self.masker = LogMasker()
         self.start_time = None
         self.persistence_type = persistence_type
@@ -66,7 +67,7 @@ class LogParserMain:
             snapshot_reason += "new template, "
         if was_template_updated:
             snapshot_reason += "updated template, "
-        if diff_time >= int(config.get('DEFAULT', 'snapshot_interval_minutes', fallback=1)):
+        if diff_time >= self.snapshot_interval_seconds:
             snapshot_reason += "periodic, "
         return snapshot_reason
 
