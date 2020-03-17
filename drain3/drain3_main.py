@@ -86,5 +86,4 @@ class LogParserMain:
         cluster_json = json.dumps(cluster_dict)
         if self.persistence_type != "":
             self.snapshot_handler(cluster_dict["cluster_count"], old_total_clusters, was_template_updated)
-        logger.info("{0}".format(cluster_json))
         return cluster_json
