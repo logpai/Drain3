@@ -33,7 +33,7 @@ class KafkaPersistence(PersistenceHandler):
         end_offset = list(end_offsets.values())[0]
         if end_offset > 0:
             consumer.seek(partition, end_offset - 1)
-            snapshot_poll_timeout_ms = config.get('DEFAULT', 'snapshot_poll_timeout_sec', fallback=60) * 1000
+            snapshot_poll_timeout_ms = int(config.get('DEFAULT', 'snapshot_poll_timeout_sec', fallback=60)) * 1000
             records = consumer.poll(snapshot_poll_timeout_ms)
             if not records:
                 raise RuntimeError(f"No message received from Kafka during restore even though end_offset>0")

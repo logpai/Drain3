@@ -13,8 +13,8 @@ from drain3 import TemplateMiner
 from drain3.file_persistence import FilePersistence
 from drain3.kafka_persistence import KafkaPersistence
 
-# persistence_type = "KAFKA"
 # persistence_type = "NONE"
+# persistence_type = "KAFKA"
 persistence_type = "FILE"
 
 config = configparser.ConfigParser()
