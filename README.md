@@ -143,8 +143,10 @@ Drain3 is available from pypi. To install use `pip`:
 
 ## Examples
 
+Run from the root folder of the repository: 
+
 ```
-python examples/drain_stdin_demo.py
+python -m examples.drain_stdin_demo
 ```
 
 Use Drain3 with input from stdin and persist to either Kafka / file / no persistence.
