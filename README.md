@@ -41,7 +41,8 @@ Read more information about Drain from the following paper:
  
 - **Persistence**. Save and load Drain state into an [Apache Kafka](https://kafka.apache.org) topic or a file.
 - **Streaming**. Support feeding Drain with messages one-be-one.
-- **Masking**. Replace some message parts (e.g numbers, IPs, emails) with wildcards. This improves the accuracy of template mining. 
+- **Masking**. Replace some message parts (e.g numbers, IPs, emails) with wildcards. This improves the accuracy of template mining.
+- **Packaging**. As a pip package. 
 
 #### Expected Input and Output
 
@@ -135,7 +136,7 @@ For Kafka persistence, you need to provide: `topic_name` and `server_name`.
 
 ## Installation
 
-drain3 is available from pypi. To install use `pip`:
+Drain3 is available from pypi. To install use `pip`:
 
 ```pip3 install drain3```
 
