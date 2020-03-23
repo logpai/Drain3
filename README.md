@@ -136,7 +136,7 @@ For Kafka persistence, you need to provide: `topic_name` and `server_name`.
 
 ## Installation
 
-Drain3 is available from pypi. To install use `pip`:
+Drain3 is available from [PyPI](https://pypi.org/project/drain3). To install use `pip`:
 
 ```pip3 install drain3```
 
