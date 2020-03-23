@@ -1,2 +1,2 @@
-from drain3.drain3_main import LogParserMain
+from drain3.template_miner import TemplateMiner
 

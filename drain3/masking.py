@@ -4,15 +4,16 @@ Author      : Moshik Hershcovitch
 Author_email: moshikh@il.ibm.com
 License     : MIT
 """
-import re
-from typing import List
-import logging
 import configparser
 import json
+import logging
+import re
+from typing import List
 
 logger = logging.getLogger(__name__)
 config = configparser.ConfigParser()
 config.read('drain3.ini')
+
 
 class MaskingInstruction:
     def __init__(self, regex_pattern: str, mask_with: str):
@@ -30,6 +31,7 @@ class RegexMasker:
         for mi in self.masking_instructions:
             content = re.sub(mi.regex, mi.mask_with_wrapped, content)
         return content
+
 
 # Some masking examples
 # ---------------------
