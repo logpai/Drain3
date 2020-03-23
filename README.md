@@ -29,7 +29,7 @@ A0002 (size 2): Hex number <HEX>
 A0003 (size 2): user <*> logged in
 ```
 
-This project is an upgrade of the original [Drain]([https://github.com/logpai/logparser/blob/master/logparser/Drain]) 
+This project is an upgrade of the original [Drain](https://github.com/logpai/logparser/blob/master/logparser/Drain) 
 project by LogPAI from Python 2.7 to Python 3.6 or later with some bug-fixes and additional features.
 
 Read more information about Drain from the following paper:
