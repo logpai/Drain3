@@ -39,7 +39,7 @@ Read more information about Drain from the following paper:
 
 #### New features
  
-- **Persistence**. Save and load Drain state into an Apache Kafka topic or a file.
+- **Persistence**. Save and load Drain state into an [Apache Kafka](https://kafka.apache.org) topic or a file.
 - **Streaming**. Support feeding Drain with messages one-be-one.
 - **Masking**. Replace some message parts (e.g numbers, IPs, emails) with wildcards. This improves the accuracy of template mining. 
 
@@ -146,7 +146,7 @@ drain3 is available from pypi. To install use `pip`:
 python examples/drain_stdin_demo.py
 ```
 
-Use Drain with input from stdin and persist to either Kafka / file / no persistence.
+Use Drain3 with input from stdin and persist to either Kafka / file / no persistence.
 
 Enter several log lines using the command line. Press `q` to end execution.
 
