@@ -24,6 +24,7 @@ config.read('drain3.ini')
 class TemplateMiner:
 
     def __init__(self, persistence_handler: PersistenceHandler):
+        logger.info("Starting Drain3 template miner")
         self.compress_state = config.get('DEFAULT', 'compress_state', fallback=True)
         self.persistence_handler = persistence_handler
         self.snapshot_interval_seconds = int(config.get('DEFAULT', 'snapshot_interval_minutes', fallback=5)) * 60
@@ -34,6 +35,8 @@ class TemplateMiner:
             self.load_state()
 
     def load_state(self):
+        logger.info("Checking for saved state")
+
         state = self.persistence_handler.load_state()
         if state is None:
             logger.info("Saved state not found")
