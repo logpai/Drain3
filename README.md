@@ -56,16 +56,15 @@ The output is a dictionary with the following fields:
 - `cluster_count`: Count clusters seen so far
 - `template_mined`: the last template of above cluster_id
 
-- templates might changed over time based on input, for example:
+Templates may change over time based on input, for example:
 
+```
 > input: aa aa aa
->
 > output: {"change_type": "cluster_created", "cluster_id": "A0001", "cluster_size": 1, "template_mined": "aa aa aa", "cluster_count": 1}
->
-> input: aa aa ab
->
-> output:  {"change_type": "cluster_template_changed", "cluster_id": "A0001", "cluster_size": 2, "template_mined": "aa aa <*>", "cluster_count": 1}
 
+> input: aa aa ab
+> output: {"change_type": "cluster_template_changed", "cluster_id": "A0001", "cluster_size": 2, "template_mined": "aa aa <*>", "cluster_count": 1}
+```
 
 **Explanation:** *Drain3 learned that the third token is a parameter*
 
