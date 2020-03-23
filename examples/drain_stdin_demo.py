@@ -13,7 +13,6 @@ from drain3 import TemplateMiner
 from drain3.file_persistence import FilePersistence
 from drain3.kafka_persistence import KafkaPersistence
 
-
 # persistence_type = "KAFKA"
 # persistence_type = "NONE"
 persistence_type = "FILE"
@@ -32,9 +31,15 @@ else:
     persistence = None
 
 template_miner = TemplateMiner(persistence)
-logger.info(f"Drain3 started with '{persistence_type}' persistence, reading from std-in ..")
+print(f"Drain3 started with '{persistence_type}' persistence, reading from std-in (input 'q' to finish)")
 while True:
     log_line = input()
+    if log_line == 'q':
+        break
     cluster_dict = template_miner.add_log_message(log_line)
     cluster_json = json.dumps(cluster_dict)
     print(cluster_json)
+
+print("Done. Clusters:")
+for c in template_miner.drain.clusters:
+    print(c)

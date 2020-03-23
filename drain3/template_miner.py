@@ -26,7 +26,7 @@ class TemplateMiner:
     def __init__(self, persistence_handler: PersistenceHandler):
         self.compress_state = config.get('DEFAULT', 'compress_state', fallback=True)
         self.persistence_handler = persistence_handler
-        self.snapshot_interval_seconds = int(config.get('DEFAULT', 'snapshot_interval_minutes', fallback=1)) * 60
+        self.snapshot_interval_seconds = int(config.get('DEFAULT', 'snapshot_interval_minutes', fallback=5)) * 60
         self.drain = Drain(sim_th=float(config.get('DEFAULT', 'sim_th', fallback=0.4)))
         self.masker = LogMasker()
         self.last_save_time = time.time()

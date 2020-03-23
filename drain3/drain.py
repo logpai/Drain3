@@ -17,6 +17,9 @@ class LogCluster:
     def get_template(self):
         return ' '.join(self.log_template_tokens)
 
+    def __str__(self):
+        return f"{self.cluster_id} (size {self.size}): {self.get_template()}"
+
 
 class Node:
     def __init__(self, key, depth):
@@ -195,9 +198,12 @@ class Drain:
 
         return ret_val
 
-    def print_tree(self, node, dep):
+    def print_tree(self):
+        self.print_node(self.root_node, 0)
+
+    def print_node(self, node, depth):
         out_str = ''
-        for i in range(dep):
+        for i in range(depth):
             out_str += '\t'
 
         if node.depth == 0:
@@ -212,7 +218,7 @@ class Drain:
         if node.depth == self.depth:
             return 1
         for child in node.key_to_child_node:
-            self.print_tree(node.key_to_child_node[child], dep + 1)
+            self.print_node(node.key_to_child_node[child], depth + 1)
 
     @staticmethod
     def num_to_cluster_id(num):
