@@ -1,7 +1,7 @@
 """
 Description : This file implements the Drain algorithm for log parsing
 Author      : LogPAI team
-Modified by : david.ohana@ibm.com + moshikh@il.ibm.com
+Modified by : david.ohana@ibm.com, moshikh@il.ibm.com
 License     : MIT
 """
 
@@ -17,6 +17,9 @@ class LogCluster:
     def get_template(self):
         return ' '.join(self.log_template_tokens)
 
+    def __str__(self):
+        return f"{self.cluster_id} (size {self.size}): {self.get_template()}"
+
 
 class Node:
     def __init__(self, key, depth):
@@ -26,7 +29,7 @@ class Node:
         self.clusters = []
 
 
-class LogParserCore:
+class Drain:
 
     def __init__(self, depth=4, sim_th=0.4, max_children=100):
         """
@@ -49,18 +52,22 @@ class LogParserCore:
     def tree_search(self, root_node: Node, tokens):
 
         token_count = len(tokens)
+        parent_node = root_node.key_to_child_node.get(token_count)
+
         # no template with same token count yet
-        if token_count not in root_node.key_to_child_node:
+        if parent_node is None:
             return None
 
-        parent_node = root_node.key_to_child_node[token_count]
+        # handle case of empty log string
+        if token_count == 0:
+            return parent_node.clusters[0]
 
         cluster = None
         current_depth = 1
         for token in tokens:
             at_max_depth = current_depth == self.depth
             is_last_token = current_depth == token_count
-            
+
             if at_max_depth or is_last_token:
                 break
 
@@ -86,6 +93,11 @@ class LogParserCore:
             first_layer_node = root_node.key_to_child_node[token_count]
 
         parent_node = first_layer_node
+
+        # handle case of empty log string
+        if len(cluster.log_template_tokens) == 0:
+            parent_node.clusters.append(cluster)
+            return
 
         current_depth = 1
         for token in cluster.log_template_tokens:
@@ -186,11 +198,14 @@ class LogParserCore:
 
         return ret_val
 
-    def print_tree(self, node, dep):
+    def print_tree(self):
+        self.print_node(self.root_node, 0)
+
+    def print_node(self, node, depth):
         out_str = ''
-        for i in range(dep):
+        for i in range(depth):
             out_str += '\t'
-        
+
         if node.depth == 0:
             out_str += 'Root'
         elif node.depth == 1:
@@ -203,32 +218,41 @@ class LogParserCore:
         if node.depth == self.depth:
             return 1
         for child in node.key_to_child_node:
-            self.print_tree(node.key_to_child_node[child], dep + 1)
+            self.print_node(node.key_to_child_node[child], depth + 1)
 
     @staticmethod
     def num_to_cluster_id(num):
         cluster_id = "A{:04d}".format(num)
         return cluster_id
 
-    def parse_line(self, content: str):
+    def add_log_message(self, content: str):
         content = content.strip()
         content_tokens = content.split()
         match_cluster = self.tree_search(self.root_node, content_tokens)
-        was_template_updated = 0
+
         # Match no existing log cluster
         if match_cluster is None:
             cluster_num = len(self.clusters) + 1
             cluster_id = self.num_to_cluster_id(cluster_num)
-            new_cluster = LogCluster(content_tokens, cluster_id)
-            self.clusters.append(new_cluster)
-            self.add_seq_to_prefix_tree(self.root_node, new_cluster)
-            return new_cluster.cluster_id, len(self.clusters), new_cluster.get_template(), was_template_updated
+            match_cluster = LogCluster(content_tokens, cluster_id)
+            self.clusters.append(match_cluster)
+            self.add_seq_to_prefix_tree(self.root_node, match_cluster)
+            update_type = "cluster_created"
 
         # Add the new log message to the existing cluster
         else:
             new_template_tokens = self.get_template(content_tokens, match_cluster.log_template_tokens)
             if ' '.join(new_template_tokens) != ' '.join(match_cluster.log_template_tokens):
                 match_cluster.log_template_tokens = new_template_tokens
-                was_template_updated = 1
+                update_type = "cluster_template_changed"
+            else:
+                update_type = "none"
             match_cluster.size += 1
-            return match_cluster.cluster_id, len(self.clusters), match_cluster.get_template(), was_template_updated
+
+        return match_cluster, update_type
+
+    def get_total_cluster_size(self):
+        size = 0
+        for c in self.clusters:
+            size += c.size
+        return size
