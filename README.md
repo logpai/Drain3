@@ -12,13 +12,13 @@ Drain3 continuously learns on-the-fly and automatically extracts "log templates"
 For the input:
 
 ```
-> connected to 10.0.0.1
-> connected to 10.0.0.2
-> connected to 10.0.0.3
-> Hex number 0xDEADBEAF
-> Hex number 0x10000
-> user davidoh logged in
-> user eranr logged in
+connected to 10.0.0.1
+connected to 10.0.0.2
+connected to 10.0.0.3
+Hex number 0xDEADBEAF
+Hex number 0x10000
+user davidoh logged in
+user eranr logged in
 ```
 
 Drain3 extracts the following templates:
@@ -59,11 +59,11 @@ The output is a dictionary with the following fields:
 Templates may change over time based on input, for example:
 
 ```
-> input: aa aa aa
-> output: {"change_type": "cluster_created", "cluster_id": "A0001", "cluster_size": 1, "template_mined": "aa aa aa", "cluster_count": 1}
+aa aa aa
+{"change_type": "cluster_created", "cluster_id": "A0001", "cluster_size": 1, "template_mined": "aa aa aa", "cluster_count": 1}
 
-> input: aa aa ab
-> output: {"change_type": "cluster_template_changed", "cluster_id": "A0001", "cluster_size": 2, "template_mined": "aa aa <*>", "cluster_count": 1}
+aa aa ab
+{"change_type": "cluster_template_changed", "cluster_id": "A0001", "cluster_size": 2, "template_mined": "aa aa <*>", "cluster_count": 1}
 ```
 
 **Explanation:** *Drain3 learned that the third token is a parameter*
@@ -79,7 +79,7 @@ Drain3 is configured using [configparser](https://docs.python.org/3.4/library/co
 
 ## Masking
 
-This feature allows masking of specific parameters in log message to specific keywords. Use List of regular expression  
+This feature allows masking of specific parameters in log message to specific keywords. Use a list of regular expression  
 dictionaries in the configuration file with the format {'regex_pattern', 'mask_with'} to set custom masking.
 
 In order to mask an IP address created the file `drain3.ini` :
@@ -92,9 +92,10 @@ masking = [
 ```
 
 Now, Drain3 recognizes IP addresses in templates, for example with input such as:
->  `IP is 12.12.12.12`
-Drain3 output output:
-> `{"cluster_id": "A0015", "cluster_count": 16, "template_mined": "my ip is <IP>"}`
+```
+IP is 12.12.12.12
+{"change_type": "cluster_created", "cluster_id": "A0013", "cluster_size": 1, "template_mined": "IP is <IP>", "cluster_count": 13}
+```
 
 Note: template parameters that do not match custom masking are output as <*>
 
