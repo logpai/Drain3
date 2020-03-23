@@ -79,7 +79,7 @@ class TemplateMiner:
     def add_log_message(self, log_message: str):
         masked_content = self.masker.mask(log_message)
         cluster, change_type = self.drain.add_log_message(masked_content)
-        cluster_dict = {
+        result = {
             "change_type": change_type,
             "cluster_id": cluster.cluster_id,
             "cluster_size": cluster.size,
@@ -92,4 +92,4 @@ class TemplateMiner:
             if snapshot_reason:
                 self.save_state(snapshot_reason)
                 self.last_save_time = time.time()
-        return cluster_dict
+        return result

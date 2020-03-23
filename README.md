@@ -39,8 +39,8 @@ Read more information about Drain from the following paper:
 
 #### New features
  
-- **Persistence**. Save and load Drain state into an Apache Kafka topic or a file
-- **Streaming**. Support feeding Drain with messages one-be-one
+- **Persistence**. Save and load Drain state into an Apache Kafka topic or a file.
+- **Streaming**. Support feeding Drain with messages one-be-one.
 - **Masking**. Replace some message parts (e.g numbers, IPs, emails) with wildcards. This improves the accuracy of template mining. 
 
 #### Expected Input and Output

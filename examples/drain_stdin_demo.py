@@ -36,10 +36,10 @@ while True:
     log_line = input()
     if log_line == 'q':
         break
-    cluster_dict = template_miner.add_log_message(log_line)
-    cluster_json = json.dumps(cluster_dict)
-    print(cluster_json)
+    result = template_miner.add_log_message(log_line)
+    result_json = json.dumps(result)
+    print(result_json)
 
-print("Done. Clusters:")
-for c in template_miner.drain.clusters:
-    print(c)
+print("Clusters:")
+for cluster in template_miner.drain.clusters:
+    print(cluster)
