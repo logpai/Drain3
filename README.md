@@ -125,13 +125,18 @@ Snapshots are created in the following events:
 - `cluster_template_changed` - in any update of a template
 - `periodic` - after n minutes from the last snapshot. This is intended to save cluster sizes even if no new template was identified.  
 
-Drain3 supports two persistence methods:
+Drain3 currently supports 3 persistence modes:
 
 - **Kafka** - The snapshot is saved in a dedicated topic used only for snapshots - the last message in this topic 
 is the last snapshot that will be loaded after restart.
 For Kafka persistence, you need to provide: `topic_name` and `server_name`. 
 
 - **File** - The snapshot is saved to a file.
+
+- **None** - No persistence.
+
+Drain3 persistence modes can be easily extended to another medium / database by 
+inheriting the [PersistenceHandler](drain3/persistence_handler.py) class.
 
 
 ## Installation
@@ -143,7 +148,7 @@ Drain3 is available from [PyPI](https://pypi.org/project/drain3). To install use
 
 ## Examples
 
-Run from the root folder of the repository: 
+Run [examples/drain_stdin_demo.py](examples/drain_stdin_demo.py) from the root folder of the repository by: 
 
 ```
 python -m examples.drain_stdin_demo
