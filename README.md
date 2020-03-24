@@ -100,7 +100,7 @@ IP is 12.12.12.12
 
 Note: template parameters that do not match custom masking are output as <*>
 
-## Persistence:
+## Persistence
 The persistence feature saves and loads a snapshot of Drain3 state in (compressed) json format. This feature adds restart resiliency
 to Drain allowing continuation of activity and knowledge across restarts.
 
