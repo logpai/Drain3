@@ -1,5 +1,4 @@
-__pycache__/*
-drain3/__pycache__/*
+**/__pycache__/*
 MANIFEST
 dist/*
 venv/*

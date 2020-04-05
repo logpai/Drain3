@@ -161,3 +161,7 @@ Enter several log lines using the command line. Press `q` to end execution.
 Change `persistence_type` variable in the example to change persistence mode.
 
 An example drain3.ini file with masking instructions exists in the `examples` folder.
+
+## Contributing 
+
+Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for further details.
