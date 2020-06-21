@@ -1,4 +1,4 @@
-jsonpickle==1.3
+jsonpickle==1.4.1
 kafka==1.3.5
 
 
