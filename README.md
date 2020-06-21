@@ -133,7 +133,7 @@ Drain3 currently supports 3 persistence modes:
 is the last snapshot that will be loaded after restart.
 For Kafka persistence, you need to provide: `topic_name` and `server_name`. 
 
-- **Redis** - The snapshot is saved to a key in Redis database.
+- **Redis** - The snapshot is saved to a key in Redis database (contributed by @matabares).
 
 - **File** - The snapshot is saved to a file.
 
