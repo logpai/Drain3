@@ -41,7 +41,7 @@ A possible Drain3 use case in this blog post: [Use open source Drain3 log-templa
 
 #### New features
  
-- **Persistence**. Save and load Drain state into an [Apache Kafka](https://kafka.apache.org) topic or a file.
+- **Persistence**. Save and load Drain state into an [Apache Kafka](https://kafka.apache.org) topic, [Redis](https://redis.io/) or a file.
 - **Streaming**. Support feeding Drain with messages one-be-one.
 - **Masking**. Replace some message parts (e.g numbers, IPs, emails) with wildcards. This improves the accuracy of template mining.
 - **Packaging**. As a pip package. 
@@ -132,6 +132,8 @@ Drain3 currently supports 3 persistence modes:
 - **Kafka** - The snapshot is saved in a dedicated topic used only for snapshots - the last message in this topic 
 is the last snapshot that will be loaded after restart.
 For Kafka persistence, you need to provide: `topic_name` and `server_name`. 
+
+- **Redis** - The snapshot is saved to a key in Redis database.
 
 - **File** - The snapshot is saved to a file.
 
