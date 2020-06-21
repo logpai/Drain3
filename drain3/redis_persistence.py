@@ -7,7 +7,6 @@ import configparser
 
 import redis
 
-# logger = logging.getLogger(__name__)
 from drain3.persistence_handler import PersistenceHandler
 
 config = configparser.ConfigParser()
@@ -29,7 +28,6 @@ class RedisPersistence(PersistenceHandler):
                              ssl=self.is_ssl)
 
     def save_state(self, state):
-
         self.r.set(self.redis_key, state)
 
     def load_state(self):

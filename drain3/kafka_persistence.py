@@ -8,7 +8,6 @@ import configparser
 
 import kafka
 
-# logger = logging.getLogger(__name__)
 from drain3.persistence_handler import PersistenceHandler
 
 config = configparser.ConfigParser()

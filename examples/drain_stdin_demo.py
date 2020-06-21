@@ -16,8 +16,8 @@ from drain3.redis_persistence import RedisPersistence
 
 # persistence_type = "NONE"
 # persistence_type = "KAFKA"
-#persistence_type = "FILE"
-persistence_type = "REDIS"
+# persistence_type = "REDIS"
+persistence_type = "FILE"
 
 config = configparser.ConfigParser()
 config.read('drain3.ini')
