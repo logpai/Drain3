@@ -12,10 +12,12 @@ import sys
 from drain3 import TemplateMiner
 from drain3.file_persistence import FilePersistence
 from drain3.kafka_persistence import KafkaPersistence
+from drain3.redis_persistence import RedisPersistence
 
 # persistence_type = "NONE"
 # persistence_type = "KAFKA"
-persistence_type = "FILE"
+#persistence_type = "FILE"
+persistence_type = "REDIS"
 
 config = configparser.ConfigParser()
 config.read('drain3.ini')
@@ -27,6 +29,13 @@ if persistence_type == "KAFKA":
     persistence = KafkaPersistence("localhost:9092", "drain3_state")
 elif persistence_type == "FILE":
     persistence = FilePersistence("drain3_state.bin")
+elif persistence_type == "REDIS":
+    persistence = RedisPersistence(redis_host='',
+                                   redis_port=25061,
+                                   redis_db=0,
+                                   redis_pass='',
+                                   is_ssl=True,
+                                   redis_key="drain3_state_key")
 else:
     persistence = None
 
