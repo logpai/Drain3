@@ -42,8 +42,8 @@ class Drain:
         self.depth = depth - 2
         self.sim_th = sim_th
         self.max_children = max_children
-        self.root_node = Node("(ROOT)", 0)
         self.clusters = []
+        self.root_node = Node("(ROOT)", 0)
 
     @staticmethod
     def has_numbers(s):
