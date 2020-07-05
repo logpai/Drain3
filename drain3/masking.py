@@ -50,13 +50,17 @@ class RegexMasker:
 
 class LogMasker:
     def __init__(self):
-        masking_instances = []
+        masking_instructions = []
         self.masker = None
-        m = json.loads(config.get('DEFAULT', 'masking', fallback="[]"))
-        for i in range(len(m)):
-            logger.info("Adding custom mask {0} --> {1}".format(str(m[i]['mask_with']), str(m[i]['regex_pattern'])))
-            masking_instances.append(MaskingInstruction(m[i]['regex_pattern'], m[i]['mask_with']))
-        self.masker = RegexMasker(masking_instances)
+        masking_str = config.get('DEFAULT', 'masking', fallback="[]")
+        masking_list = json.loads(masking_str)
+        for mi in masking_list:
+            logger.info("Adding custom mask {} --> {}".format(
+                mi['mask_with'],
+                mi['regex_pattern']))
+            instruction = MaskingInstruction(mi['regex_pattern'], mi['mask_with'])
+            masking_instructions.append(instruction)
+        self.masker = RegexMasker(masking_instructions)
 
     def mask(self, content: str):
         if self.masker is not None:
