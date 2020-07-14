@@ -149,6 +149,17 @@ Drain3 is available from [PyPI](https://pypi.org/project/drain3). To install use
 
 ```pip3 install drain3```
 
+Note: If you decide to use Kafka or Redis persistence, you should install relevant client library 
+explicitly, since it is declared as an extra (optional) dependency, by either:
+
+```
+pip3 install kafka
+```
+
+```
+pip3 install redis
+```
+
 
 ## Examples
 

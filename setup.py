@@ -9,21 +9,23 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 setup(
     name='drain3',
     packages=['drain3'],
-    version="0.7.4",
+    version="0.7.5",
     license='MIT',
-    description="persistent log parser",
+    description="Persistent & streaming log template miner",
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="IBM Research Haifa",
     author_email="david.ohana@ibm.com",
     url="https://github.com/IBM/Drain3",
     download_url='https://github.com/IBM/Drain3/archive/v_01.tar.gz',
-    keywords=['drain', 'log', 'parser', 'IBM'],
+    keywords=['drain', 'log', 'parser', 'IBM', 'template', 'logs', 'miner'],
     install_requires=[
         'jsonpickle==1.4.1',
-        'kafka==1.3.5',
-        'redis==3.5.3'
     ],
+    extras_require={
+        "kafka": ['kafka==1.3.5'],
+        "redis": ['redis==3.5.3'],
+    },
     classifiers=[
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
