@@ -11,8 +11,6 @@ import re
 from typing import List
 
 logger = logging.getLogger(__name__)
-config = configparser.ConfigParser()
-config.read('drain3.ini')
 
 
 class MaskingInstruction:
@@ -49,10 +47,10 @@ class RegexMasker:
 
 
 class LogMasker:
-    def __init__(self):
+    def __init__(self, config: configparser.ConfigParser):
         masking_instructions = []
         self.masker = None
-        masking_str = config.get('DEFAULT', 'masking', fallback="[]")
+        masking_str = config.get('MASKING', 'masking', fallback="[]")
         masking_list = json.loads(masking_str)
         for mi in masking_list:
             logger.info("Adding custom mask {} --> {}".format(

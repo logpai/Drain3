@@ -73,12 +73,17 @@ aa aa ab
 
 ## Configuration
 
-Drain3 is configured using [configparser](https://docs.python.org/3.4/library/configparser.html) using file `drain3.ini` available parameters are:
-- `[DEFAULT]/snapshot_poll_timeout_sec` - maximum timeout for restoring snapshot from Kafka (default 60)
-- `[DEFAULT]/sim_th` - recognition threshold (default 0.4)
-- `[DEFAULT]/masking` - parameters masking - in json format (default "")
-- `[DEFAULT]/snapshot_interval_minutes` - interval for new snapshots (default 1)
-- `[DEFAULT]/compress_state` - whether to compress the state before saving it. This can be useful when using Kafka persistence. 
+Drain3 is configured using [configparser](https://docs.python.org/3.4/library/configparser.html). 
+Config filename is `drain3.ini` in working directory.   
+
+Available parameters are:
+
+- `[DRAIN]/sim_th` - similarity threshold (default 0.4)
+- `[DRAIN]/depth` - depth of all leaf nodes (default 4)
+- `[DRAIN]/max_children` - max number of children of an internal node (default 100)
+- `[MASKING]/masking` - parameters masking - in json format (default "")
+- `[SNAPSHOT]/snapshot_interval_minutes` - time interval for new snapshots (default 1)
+- `[SNAPSHOT]/compress_state` - whether to compress the state before saving it. This can be useful when using Kafka persistence. 
 
 ## Masking
 
@@ -88,7 +93,7 @@ dictionaries in the configuration file with the format {'regex_pattern', 'mask_w
 In order to mask an IP address created the file `drain3.ini` :
 
 ```
-[DEFAULT]
+[MASKING]
 masking = [
     {"regex_pattern":"((?<=[^A-Za-z0-9])|^)(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})((?=[^A-Za-z0-9])|$)", "mask_with": "IP"},
     ]
@@ -182,3 +187,9 @@ An example drain3.ini file with masking instructions exists in the `examples` fo
 ## Contributing 
 
 Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for further details.
+
+## Change Log
+
+* **0.7.6** - Improvement in config file handling (Note: new sections were added instead of `DEFAULT` section)  
+* **0.7.5** - Made Kafka and Redis optional requirements
+ 

@@ -17,19 +17,26 @@ from drain3.masking import LogMasker
 from drain3.persistence_handler import PersistenceHandler
 
 logger = logging.getLogger(__name__)
-config = configparser.ConfigParser()
-config.read('drain3.ini')
+
+config_filename = 'drain3.ini'
 
 
 class TemplateMiner:
 
     def __init__(self, persistence_handler: PersistenceHandler):
         logger.info("Starting Drain3 template miner")
-        self.compress_state = config.get('DEFAULT', 'compress_state', fallback=True)
+        self.config = configparser.ConfigParser()
+        self.config.read(config_filename)
+
         self.persistence_handler = persistence_handler
-        self.snapshot_interval_seconds = int(config.get('DEFAULT', 'snapshot_interval_minutes', fallback=5)) * 60
-        self.drain = Drain(sim_th=float(config.get('DEFAULT', 'sim_th', fallback=0.4)))
-        self.masker = LogMasker()
+        self.snapshot_interval_seconds = self.config.getint('SNAPSHOT', 'snapshot_interval_minutes', fallback=5) * 60
+        self.compress_state = self.config.getboolean('SNAPSHOT', 'compress_state', fallback=True)
+        self.drain = Drain(
+            sim_th=self.config.getfloat('DRAIN', 'sim_th', fallback=0.4),
+            depth=self.config.getfloat('DRAIN', 'depth', fallback=0.4),
+            max_children=self.config.getfloat('DRAIN', 'max_children', fallback=0.4)
+        )
+        self.masker = LogMasker(self.config)
         self.last_save_time = time.time()
         if persistence_handler is not None:
             self.load_state()

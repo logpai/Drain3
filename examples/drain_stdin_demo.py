@@ -4,7 +4,6 @@ Author      : David Ohana, Moshik Hershcovitch, Eran Raichstein
 Author_email: david.ohana@ibm.com, moshikh@il.ibm.com, eranra@il.ibm.com
 License     : MIT
 """
-import configparser
 import json
 import logging
 import sys
@@ -16,22 +15,22 @@ from drain3 import TemplateMiner
 # persistence_type = "REDIS"
 persistence_type = "FILE"
 
-config = configparser.ConfigParser()
-config.read('drain3.ini')
-
 logger = logging.getLogger(__name__)
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
 
 if persistence_type == "KAFKA":
     from drain3.kafka_persistence import KafkaPersistence
+
     persistence = KafkaPersistence("localhost:9092", "drain3_state")
 
 elif persistence_type == "FILE":
     from drain3.file_persistence import FilePersistence
+
     persistence = FilePersistence("drain3_state.bin")
 
 elif persistence_type == "REDIS":
     from drain3.redis_persistence import RedisPersistence
+
     persistence = RedisPersistence(redis_host='',
                                    redis_port=25061,
                                    redis_db=0,

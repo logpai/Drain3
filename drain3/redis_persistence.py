@@ -3,14 +3,10 @@ Author      : Mauricio Tabares
 Author_email: matabares@netactica.com
 License     : MIT
 """
-import configparser
 
 import redis
 
 from drain3.persistence_handler import PersistenceHandler
-
-config = configparser.ConfigParser()
-config.read('drain3.ini')
 
 
 class RedisPersistence(PersistenceHandler):
