@@ -190,6 +190,7 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 
 ## Change Log
 
+* **0.7.7** - Corrected default Drain config values.  
 * **0.7.6** - Improvement in config file handling (Note: new sections were added instead of `DEFAULT` section)  
 * **0.7.5** - Made Kafka and Redis optional requirements
  

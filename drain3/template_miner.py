@@ -33,8 +33,8 @@ class TemplateMiner:
         self.compress_state = self.config.getboolean('SNAPSHOT', 'compress_state', fallback=True)
         self.drain = Drain(
             sim_th=self.config.getfloat('DRAIN', 'sim_th', fallback=0.4),
-            depth=self.config.getfloat('DRAIN', 'depth', fallback=0.4),
-            max_children=self.config.getfloat('DRAIN', 'max_children', fallback=0.4)
+            depth=self.config.getint('DRAIN', 'depth', fallback=4),
+            max_children=self.config.getint('DRAIN', 'max_children', fallback=100)
         )
         self.masker = LogMasker(self.config)
         self.last_save_time = time.time()
