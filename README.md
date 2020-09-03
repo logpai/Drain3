@@ -136,7 +136,9 @@ Drain3 currently supports 3 persistence modes:
 
 - **Kafka** - The snapshot is saved in a dedicated topic used only for snapshots - the last message in this topic 
 is the last snapshot that will be loaded after restart.
-For Kafka persistence, you need to provide: `bootstrap_servers` and `topic_name`. 
+For Kafka persistence, you need to provide: `topic_name`. You may also provide other `kwargs` 
+that are supported by `kafka.KafkaConsumer` and `kafka.Producer` e.g `bootstrap_servers` 
+to change Kafka endpoint (default is `localhost:9092`). 
 
 - **Redis** - The snapshot is saved to a key in Redis database (contributed by @matabares).
 
@@ -189,6 +191,10 @@ An example drain3.ini file with masking instructions exists in the `examples` fo
 Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for further details.
 
 ## Change Log
+
+##### v0.7.9
+
+* Fix: `KafkaPersistence` now accepts also `bootstrap_servers` as kwargs. 
 
 ##### v0.7.8 
 

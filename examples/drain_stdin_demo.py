@@ -11,8 +11,8 @@ import sys
 from drain3 import TemplateMiner
 
 # persistence_type = "NONE"
-# persistence_type = "KAFKA"
 # persistence_type = "REDIS"
+# persistence_type = "KAFKA"
 persistence_type = "FILE"
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
 if persistence_type == "KAFKA":
     from drain3.kafka_persistence import KafkaPersistence
 
-    persistence = KafkaPersistence("localhost:9092", "drain3_state")
+    persistence = KafkaPersistence("drain3_state", bootstrap_servers="localhost:9092")
 
 elif persistence_type == "FILE":
     from drain3.file_persistence import FilePersistence

@@ -11,9 +11,8 @@ from drain3.persistence_handler import PersistenceHandler
 
 
 class KafkaPersistence(PersistenceHandler):
-    def __init__(self, bootstrap_servers, topic, snapshot_poll_timeout_sec=60, **kafka_client_options):
-        if bootstrap_servers:
-            kafka_client_options["bootstrap_servers"] = bootstrap_servers
+
+    def __init__(self, topic, snapshot_poll_timeout_sec=60, **kafka_client_options):
         self.topic = topic
         self.kafka_client_options = kafka_client_options
         self.producer = kafka.KafkaProducer(**self.kafka_client_options)
