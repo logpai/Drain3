@@ -136,7 +136,7 @@ Drain3 currently supports 3 persistence modes:
 
 - **Kafka** - The snapshot is saved in a dedicated topic used only for snapshots - the last message in this topic 
 is the last snapshot that will be loaded after restart.
-For Kafka persistence, you need to provide: `topic_name` and `server_name`. 
+For Kafka persistence, you need to provide: `server_list` and `topic_name`. 
 
 - **Redis** - The snapshot is saved to a key in Redis database (contributed by @matabares).
 
@@ -160,7 +160,7 @@ Note: If you decide to use Kafka or Redis persistence, you should install releva
 explicitly, since it is declared as an extra (optional) dependency, by either:
 
 ```
-pip3 install kafka
+pip3 install kafka-python
 ```
 
 ```
@@ -190,7 +190,20 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 
 ## Change Log
 
-* **0.7.7** - Corrected default Drain config values.  
-* **0.7.6** - Improvement in config file handling (Note: new sections were added instead of `DEFAULT` section)  
-* **0.7.5** - Made Kafka and Redis optional requirements
+##### v0.7.8 
+
+* Using `kafka-python` package instead of `kafka` (newer).
+* Added support for specifying additional configuration as `kwargs` in Kafka persistence handler.
+
+##### v0.7.7
+  
+* Corrected default Drain config values.
+
+##### v0.7.6
+  
+* Improvement in config file handling (Note: new sections were added instead of `DEFAULT` section)
+
+##### v0.7.5
+  
+* Made Kafka and Redis optional requirements
  

@@ -11,17 +11,19 @@ from drain3.persistence_handler import PersistenceHandler
 
 
 class KafkaPersistence(PersistenceHandler):
-    def __init__(self, server_list, topic, snapshot_poll_timeout_sec=60):
-        self.server_list = server_list
+    def __init__(self, bootstrap_servers, topic, snapshot_poll_timeout_sec=60, **kafka_client_options):
+        if bootstrap_servers:
+            kafka_client_options["bootstrap_servers"] = bootstrap_servers
         self.topic = topic
-        self.producer = kafka.KafkaProducer(bootstrap_servers=server_list)
+        self.kafka_client_options = kafka_client_options
+        self.producer = kafka.KafkaProducer(**self.kafka_client_options)
         self.snapshot_poll_timeout_sec = snapshot_poll_timeout_sec
 
     def save_state(self, state):
         self.producer.send(self.topic, value=state)
 
     def load_state(self):
-        consumer = kafka.KafkaConsumer(bootstrap_servers=self.server_list)
+        consumer = kafka.KafkaConsumer(**self.kafka_client_options)
         partition = kafka.TopicPartition(self.topic, 0)
         consumer.assign([partition])
         end_offsets = consumer.end_offsets([partition])

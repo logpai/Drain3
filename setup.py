@@ -9,7 +9,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 setup(
     name='drain3',
     packages=['drain3'],
-    version="0.7.7",
+    version="0.7.8",
     license='MIT',
     description="Persistent & streaming log template miner",
     long_description=long_description,
@@ -23,7 +23,7 @@ setup(
         'jsonpickle==1.4.1',
     ],
     extras_require={
-        "kafka": ['kafka==1.3.5'],
+        "kafka": ['kafka-python==2.0.1'],
         "redis": ['redis==3.5.3'],
     },
     classifiers=[
