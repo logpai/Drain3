@@ -136,7 +136,7 @@ Drain3 currently supports 3 persistence modes:
 
 - **Kafka** - The snapshot is saved in a dedicated topic used only for snapshots - the last message in this topic 
 is the last snapshot that will be loaded after restart.
-For Kafka persistence, you need to provide: `server_list` and `topic_name`. 
+For Kafka persistence, you need to provide: `bootstrap_servers` and `topic_name`. 
 
 - **Redis** - The snapshot is saved to a key in Redis database (contributed by @matabares).
 
