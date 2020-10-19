@@ -51,6 +51,7 @@ class Drain:
 
     def tree_search(self, root_node: Node, tokens):
 
+        # at first level, children are grouped by token (word) count
         token_count = len(tokens)
         parent_node = root_node.key_to_child_node.get(token_count)
 
@@ -58,11 +59,10 @@ class Drain:
         if parent_node is None:
             return None
 
-        # handle case of empty log string
+        # handle case of empty log string - return the single cluster in that group
         if token_count == 0:
             return parent_node.clusters[0]
 
-        cluster = None
         current_depth = 1
         for token in tokens:
             at_max_depth = current_depth == self.depth
@@ -77,7 +77,7 @@ class Drain:
             elif param_str in key_to_child_node:
                 parent_node = key_to_child_node[param_str]
             else:
-                return cluster
+                return None
             current_depth += 1
 
         cluster = self.fast_match(parent_node.clusters, tokens)
