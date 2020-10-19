@@ -76,9 +76,9 @@ class TemplateMiner:
                     f"reason: {snapshot_reason}")
         self.persistence_handler.save_state(state)
 
-    def get_snapshot_reason(self, change_type):
+    def get_snapshot_reason(self, change_type, cluster_id):
         if change_type != "none":
-            return change_type
+            return "{} ({})".format(change_type, cluster_id)
 
         diff_time_sec = time.time() - self.last_save_time
         if diff_time_sec >= self.snapshot_interval_seconds:
@@ -98,7 +98,7 @@ class TemplateMiner:
         }
 
         if self.persistence_handler is not None:
-            snapshot_reason = self.get_snapshot_reason(change_type)
+            snapshot_reason = self.get_snapshot_reason(change_type, cluster.cluster_id)
             if snapshot_reason:
                 self.save_state(snapshot_reason)
                 self.last_save_time = time.time()
