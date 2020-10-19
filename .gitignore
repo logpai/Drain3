@@ -7,3 +7,5 @@ drain3.egg-info/*
 snapshot.txt
 examples/snapshot.txt
 *.bin
+*.log
+*.gz

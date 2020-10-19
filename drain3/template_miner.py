@@ -23,7 +23,7 @@ config_filename = 'drain3.ini'
 
 class TemplateMiner:
 
-    def __init__(self, persistence_handler: PersistenceHandler):
+    def __init__(self, persistence_handler: PersistenceHandler = None):
         logger.info("Starting Drain3 template miner")
         self.config = configparser.ConfigParser()
         self.config.read(config_filename)
