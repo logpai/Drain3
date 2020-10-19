@@ -30,6 +30,7 @@ template_miner = TemplateMiner()
 
 line_count = 0
 start_time = time.time()
+batch_start_time = start_time
 batch_size = 10000
 with open(in_log_file) as f:
     for line in f:
@@ -38,18 +39,20 @@ with open(in_log_file) as f:
         result = template_miner.add_log_message(line)
         line_count += 1
         if line_count % batch_size == 0:
-            time_took = time.time() - start_time
+            time_took = time.time() - batch_start_time
             rate = batch_size / time_took
             logger.info(f"Processing line: {line_count}, rate {rate:.1f} lines/sec, "
                         f"{len(template_miner.drain.clusters)} clusters so far.")
-            start_time = time.time()
+            batch_start_time = time.time()
         if result["change_type"] != "none":
             result_json = json.dumps(result)
             logger.info("Input:  " + line)
             logger.info("Result: " + result_json)
 
-logger.info("---- Done processing file ---")
-logger.info("Clusters:")
+time_took = time.time() - start_time
+rate = line_count / time_took
+logger.info(f"--- Done processing file. Total of {line_count} lines, rate {rate:.1f} lines/sec, "
+            f"{len(template_miner.drain.clusters)} clusters")
 sorted_clusters = sorted(template_miner.drain.clusters, key=lambda it: it.size, reverse=True)
 for cluster in sorted_clusters:
     logger.info(cluster)
