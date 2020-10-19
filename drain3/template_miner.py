@@ -100,6 +100,8 @@ class TemplateMiner:
         if self.persistence_handler is not None:
             snapshot_reason = self.get_snapshot_reason(change_type)
             if snapshot_reason:
+                if snapshot_reason != "periodic":
+                    snapshot_reason = "{} ({})".format(snapshot_reason, cluster.cluster_id)
                 self.save_state(snapshot_reason)
                 self.last_save_time = time.time()
         return result
