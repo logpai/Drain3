@@ -31,7 +31,7 @@ class TemplateMiner:
 
         self.profiler: Profiler = NullProfiler()
         self.profiling_report_sec = self.config.getint('PROFILING', 'report_sec', fallback=60)
-        if self.config.getint('PROFILING', 'enabled', fallback=False):
+        if self.config.getboolean('PROFILING', 'enabled', fallback=False):
             self.profiler = SimpleProfiler()
 
         self.persistence_handler = persistence_handler
