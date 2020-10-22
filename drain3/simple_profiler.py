@@ -20,7 +20,7 @@ class Profiler(ABC):
         pass
 
     @abstractmethod
-    def report(self, report_internal_sec: int):
+    def report(self, report_internal_sec=30):
         pass
 
     @abstractmethod
@@ -35,7 +35,7 @@ class NullProfiler(Profiler):
     def end_section(self):
         pass
 
-    def report(self, report_internal_sec: int):
+    def report(self, report_internal_sec=30):
         pass
 
     def print_results(self):
