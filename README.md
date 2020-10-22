@@ -192,6 +192,9 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 
 ## Change Log
 
+##### v0.8.1
+* Bugfix in profiling configuration read
+
 ##### v0.8.0
 
 * Added time profiling support (disabled by default) 
