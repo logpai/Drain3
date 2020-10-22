@@ -192,6 +192,12 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 
 ## Change Log
 
+##### v0.8.0
+
+* Added time profiling support (disabled by default) 
+* Added cluster ID to snapshot reason log 
+* Minor Readability and documentation improvements in Drain
+
 ##### v0.7.9
 
 * Fix: `KafkaPersistence` now accepts also `bootstrap_servers` as kwargs. 
