@@ -4,6 +4,7 @@ Author      : LogPAI team
 Modified by : david.ohana@ibm.com, moshikh@il.ibm.com
 License     : MIT
 """
+from drain3.simple_profiler import Profiler
 
 param_str = '<*>'
 
@@ -31,7 +32,7 @@ class Node:
 
 class Drain:
 
-    def __init__(self, depth=4, sim_th=0.4, max_children=100):
+    def __init__(self, depth=4, sim_th=0.4, max_children=100, profiler: Profiler = None):
         """
         Attributes
         ----------
@@ -44,6 +45,7 @@ class Drain:
         self.max_children = max_children
         self.clusters = []
         self.root_node = Node("(ROOT)", 0)
+        self.profiler = profiler
 
     @staticmethod
     def has_numbers(s):
@@ -230,10 +232,14 @@ class Drain:
     def add_log_message(self, content: str):
         content = content.strip()
         content_tokens = content.split()
+
+        self.profiler.start_section("tree_search")
         match_cluster = self.tree_search(self.root_node, content_tokens)
+        self.profiler.end_section()
 
         # Match no existing log cluster
         if match_cluster is None:
+            self.profiler.start_section("create_cluster")
             cluster_num = len(self.clusters) + 1
             cluster_id = self.num_to_cluster_id(cluster_num)
             match_cluster = LogCluster(content_tokens, cluster_id)
@@ -243,6 +249,7 @@ class Drain:
 
         # Add the new log message to the existing cluster
         else:
+            self.profiler.start_section("cluster_exist")
             new_template_tokens = self.get_template(content_tokens, match_cluster.log_template_tokens)
             if ' '.join(new_template_tokens) != ' '.join(match_cluster.log_template_tokens):
                 match_cluster.log_template_tokens = new_template_tokens
@@ -250,6 +257,8 @@ class Drain:
             else:
                 update_type = "none"
             match_cluster.size += 1
+
+        self.profiler.end_section()
 
         return match_cluster, update_type
 
