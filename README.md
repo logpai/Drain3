@@ -192,6 +192,9 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 
 ## Change Log
 
+##### v0.8.3
+* fix: profiler state after load from snapshot  
+
 ##### v0.8.2
 * Fixed snapshot backward compatibility to v0.7.9 
 

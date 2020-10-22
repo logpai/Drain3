@@ -69,6 +69,8 @@ class TemplateMiner:
         for key in keys:
             drain.root_node.key_to_child_node[int(key)] = drain.root_node.key_to_child_node.pop(key)
 
+        drain.profiler = self.profiler
+
         self.drain = drain
         logger.info("Restored {0} clusters with {1} messages".format(
             len(drain.clusters), drain.get_total_cluster_size()))
