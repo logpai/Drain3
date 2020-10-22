@@ -35,11 +35,11 @@ class Drain:
         """
         Attributes
         ----------
-            depth : depth of all leaf nodes
+            depth : depth of all leaf nodes (nodes that contain log clusters)
             sim_th : similarity threshold
             max_children : max number of children of an internal node
         """
-        self.depth = depth - 2
+        self.depth = depth - 2  # number of prefix tokens in each tree path (exclude root and leaf node)
         self.sim_th = sim_th
         self.max_children = max_children
         self.clusters = []
@@ -63,25 +63,27 @@ class Drain:
         if token_count == 0:
             return parent_node.clusters[0]
 
+        # find the leaf node for this log - a path of nodes matching the first N tokens (N=tree depth)
         current_depth = 1
         for token in tokens:
-            at_max_depth = current_depth == self.depth
-            is_last_token = current_depth == token_count
+            # at_max_depth
+            if current_depth == self.depth:
+                break
 
-            if at_max_depth or is_last_token:
+            # is_last_token
+            if current_depth == token_count:
                 break
 
             key_to_child_node = parent_node.key_to_child_node
-            if token in key_to_child_node:
-                parent_node = key_to_child_node[token]
-            elif param_str in key_to_child_node:
-                parent_node = key_to_child_node[param_str]
-            else:
+            parent_node = key_to_child_node.get(token)
+            if parent_node is None:
+                parent_node = key_to_child_node.get(param_str)
+            if parent_node is None:
                 return None
+
             current_depth += 1
 
         cluster = self.fast_match(parent_node.clusters, tokens)
-
         return cluster
 
     def add_seq_to_prefix_tree(self, root_node, cluster: LogCluster):
