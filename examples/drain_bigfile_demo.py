@@ -46,7 +46,7 @@ with open(in_log_file) as f:
             batch_start_time = time.time()
         if result["change_type"] != "none":
             result_json = json.dumps(result)
-            logger.info("Input:  " + line)
+            logger.info(f"Input ({line_count}): " + line)
             logger.info("Result: " + result_json)
 
 time_took = time.time() - start_time
@@ -56,3 +56,6 @@ logger.info(f"--- Done processing file. Total of {line_count} lines, rate {rate:
 sorted_clusters = sorted(template_miner.drain.clusters, key=lambda it: it.size, reverse=True)
 for cluster in sorted_clusters:
     logger.info(cluster)
+
+print("Prefix Tree:")
+template_miner.drain.print_tree()
