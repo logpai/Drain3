@@ -1,7 +1,7 @@
 """
-Description : This file implements wrapper of the Drain core algorithm - add persistent and recovery
-Author      : David Ohana, Moshik Hershcovitch, Eran Raichstein
-Author_email: david.ohana@ibm.com, moshikh@il.ibm.com, eranra@il.ibm.com
+Description : A simple section-based performance profiler
+Author      : David Ohana
+Author_email: david.ohana@ibm.com
 License     : MIT
 """
 import time
