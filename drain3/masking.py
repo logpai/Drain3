@@ -27,7 +27,8 @@ class RegexMasker:
 
     def mask(self, content: str):
         for mi in self.masking_instructions:
-            content = re.sub(mi.regex, mi.mask_with_wrapped, content)
+            # content = re.sub(mi.regex, mi.mask_with_wrapped, content)
+            content = mi.regex.sub(mi.mask_with_wrapped, content)
         return content
 
 
