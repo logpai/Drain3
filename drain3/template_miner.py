@@ -96,11 +96,15 @@ class TemplateMiner:
         return None
 
     def add_log_message(self, log_message: str):
+        self.profiler.start_section("total")
+
         self.profiler.start_section("mask")
         masked_content = self.masker.mask(log_message)
         self.profiler.end_section()
 
+        self.profiler.start_section("drain")
         cluster, change_type = self.drain.add_log_message(masked_content)
+        self.profiler.end_section("drain")
         result = {
             "change_type": change_type,
             "cluster_id": cluster.cluster_id,
@@ -117,6 +121,6 @@ class TemplateMiner:
                 self.last_save_time = time.time()
             self.profiler.end_section()
 
+        self.profiler.end_section("total")
         self.profiler.report(self.profiling_report_sec)
-
         return result

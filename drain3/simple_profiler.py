@@ -1,9 +1,9 @@
 """
-Description : A simple section-based performance profiler
-Author      : David Ohana
-Author_email: david.ohana@ibm.com
-License     : MIT
+Description : A section-based runtime profiler.
+Author      : david.ohana@ibm.com
+License     : Apache v2
 """
+import os
 import time
 
 from abc import ABC, abstractmethod
@@ -16,87 +16,131 @@ class Profiler(ABC):
         pass
 
     @abstractmethod
-    def end_section(self):
+    def end_section(self, section_name=""):
         pass
 
     @abstractmethod
-    def report(self, report_internal_sec=30):
-        pass
-
-    @abstractmethod
-    def print_results(self):
+    def report(self, period_sec=30):
         pass
 
 
 class NullProfiler(Profiler):
+    """A no-op profiler. Use it instead of SimpleProfiler in case you want to disable profiling."""
+
     def start_section(self, section_name: str):
         pass
 
-    def end_section(self):
+    def end_section(self, section_name=""):
         pass
 
-    def report(self, report_internal_sec=30):
-        pass
-
-    def print_results(self):
+    def report(self, period_sec=30):
         pass
 
 
 class SimpleProfiler(Profiler):
-    def __init__(self):
+    def __init__(self, reset_after_sample_count=0, enclosing_section_name="total", printer=print, report_sec=30):
+        self.printer = printer
+        self.enclosing_section_name = enclosing_section_name
+        self.reset_after_sample_count = reset_after_sample_count
+        self.report_sec = report_sec
+
         self.section_to_stats = {}
-        self.current_section_name = ""
-        self.current_section_start_time_sec = 0
-        self.last_report_timestamp = time.time()
+        self.last_report_timestamp_sec = time.time()
+        self.last_started_section_name = ""
 
     def start_section(self, section_name: str):
+        """Start measuring a section"""
+
         if not section_name:
             raise ValueError("Section name is empty")
-        if self.current_section_name:
-            self.end_section()
-        self.current_section_name = section_name
-        self.current_section_start_time_sec = time.time()
+        self.last_started_section_name = section_name
 
-    def end_section(self):
-        if not self.current_section_name:
-            raise ValueError("Not inside a section")
-        took_sec = time.time() - self.current_section_start_time_sec
-        current_section = self.section_to_stats.get(self.current_section_name, None)
-        if current_section is None:
-            current_section = ProfiledSectionStats(self.current_section_name)
-            self.section_to_stats[self.current_section_name] = current_section
+        section = self.section_to_stats.get(section_name, None)
+        if section is None:
+            section = ProfiledSectionStats(section_name)
+            self.section_to_stats[section_name] = section
 
-        current_section.sample_count += 1
-        current_section.total_time_sec += took_sec
+        if section.start_time_sec != 0:
+            raise ValueError(f"Section {section_name} is already started")
 
-        self.current_section_name = ""
-        self.current_section_start_time_sec = 0
+        section.start_time_sec = time.time()
 
-    def report(self, report_internal_sec=30):
-        if time.time() - self.last_report_timestamp > report_internal_sec:
-            self.print_results()
-            self.last_report_timestamp = time.time()
+    def end_section(self, name=""):
+        """End measuring a section. Leave section name empty to end the last started section."""
 
-    def print_results(self):
+        now = time.time()
+
+        section_name = name
+        if not name:
+            section_name = self.last_started_section_name
+
+        if not section_name:
+            raise ValueError("Neither section name is specified nor a section is started")
+
+        section: ProfiledSectionStats = self.section_to_stats.get(section_name, None)
+        if section is None:
+            raise ValueError(f"Section {section_name} does not exist")
+
+        if section.start_time_sec == 0:
+            raise ValueError(f"Section {section_name} was not started")
+
+        took_sec = now - section.start_time_sec
+        if self.reset_after_sample_count > 0 and section.sample_count == self.reset_after_sample_count:
+            section.sample_count_batch = 0
+            section.total_time_sec_batch = 0
+
+        section.sample_count += 1
+        section.total_time_sec += took_sec
+        section.sample_count_batch += 1
+        section.total_time_sec_batch += took_sec
+        section.start_time_sec = 0
+
+    def report(self, period_sec=30):
+        """Print results using [printer] function. By default prints to stdout."""
+        if time.time() - self.last_report_timestamp_sec < period_sec:
+            return False
+
+        enclosing_time_sec = 0
+        if self.enclosing_section_name:
+            enclosing_section: ProfiledSectionStats = self.section_to_stats.get(self.enclosing_section_name, None)
+            if enclosing_section:
+                enclosing_time_sec = enclosing_section.total_time_sec
+
+        include_batch_rates = self.reset_after_sample_count > 0
+
         sections = self.section_to_stats.values()
-        all_sections_time_sec = sum(map(lambda it: it.total_time_sec, sections))
-        all_section_sample_count = sum(map(lambda it: it.sample_count, sections))
-        all_section = ProfiledSectionStats("Total", all_section_sample_count, all_sections_time_sec)
-        print(f"{SimpleProfiler.__name__}: {all_section.to_string(all_sections_time_sec)}")
         sorted_sections = sorted(sections, key=lambda it: it.total_time_sec, reverse=True)
-        for section in sorted_sections:
-            print(f"{SimpleProfiler.__name__}: {section.to_string(all_sections_time_sec)}")
+        lines = map(lambda it: it.to_string(enclosing_time_sec, include_batch_rates), sorted_sections)
+        text = os.linesep.join(lines)
+        self.printer(text)
+
+        self.last_report_timestamp_sec = time.time()
+        return True
 
 
 class ProfiledSectionStats:
-    def __init__(self, section_name, sample_count=0, total_time_sec=0):
+    def __init__(self, section_name, start_time_sec=0, sample_count=0, total_time_sec=0,
+                 sample_count_batch=0, total_time_sec_batch=0):
         self.section_name = section_name
+        self.start_time_sec = start_time_sec
         self.sample_count = sample_count
         self.total_time_sec = total_time_sec
+        self.sample_count_batch = sample_count_batch
+        self.total_time_sec_batch = total_time_sec_batch
 
-    def to_string(self, sum_time_sec: int):
-        percent = 100 * self.total_time_sec / sum_time_sec
-        rate = 1000 * self.total_time_sec / self.sample_count
-        return f"{self.section_name: <15}: took {self.total_time_sec:>7.2f} sec ({percent:>6.2f}%), " \
-               f"{self.sample_count: <10} samples, " \
-               f"{rate: 7.2f} ms per 1K samples"
+    def to_string(self, enclosing_time_sec: int, include_batch_rates: bool):
+        took_sec_text = f"{self.total_time_sec:>8.2f} s"
+        if enclosing_time_sec > 0:
+            took_sec_text += f" ({100 * self.total_time_sec / enclosing_time_sec:>6.2f}%)"
+
+        ms_per_k_samples = f"{1000000 * self.total_time_sec / self.sample_count: 7.2f}"
+        samples_per_sec = f"{self.sample_count / self.total_time_sec: 15,.2f}"
+
+        if include_batch_rates:
+            ms_per_k_samples += f" ({1000000 * self.total_time_sec_batch / self.sample_count_batch: 7.2f})"
+            samples_per_sec += f" ({self.sample_count_batch / self.total_time_sec_batch: 15,.2f})"
+
+        return f"{self.section_name: <15}: took {took_sec_text}, " \
+               f"{self.sample_count: >10,} samples, " \
+               f"{ms_per_k_samples} ms / 1000 samples, " \
+               f"{samples_per_sec} hz"

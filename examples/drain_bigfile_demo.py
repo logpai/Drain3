@@ -59,3 +59,5 @@ for cluster in sorted_clusters:
 
 print("Prefix Tree:")
 template_miner.drain.print_tree()
+
+template_miner.profiler.report(0)
