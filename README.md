@@ -192,6 +192,9 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 
 ## Change Log
 
+##### v0.8.5
+* Profiler improvements  
+
 ##### v0.8.4
 * Masking speed improvement  
 
