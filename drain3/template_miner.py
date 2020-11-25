@@ -4,6 +4,7 @@ Author      : David Ohana, Moshik Hershcovitch, Eran Raichstein
 Author_email: david.ohana@ibm.com, moshikh@il.ibm.com, eranra@il.ibm.com
 License     : MIT
 """
+import ast
 import base64
 import configparser
 import logging
@@ -37,10 +38,15 @@ class TemplateMiner:
         self.persistence_handler = persistence_handler
         self.snapshot_interval_seconds = self.config.getint('SNAPSHOT', 'snapshot_interval_minutes', fallback=5) * 60
         self.compress_state = self.config.getboolean('SNAPSHOT', 'compress_state', fallback=True)
+
+        extra_delimiters = self.config.get('DRAIN', 'extra_delimiters', fallback="[]")
+        extra_delimiters = ast.literal_eval(extra_delimiters)
+
         self.drain = Drain(
             sim_th=self.config.getfloat('DRAIN', 'sim_th', fallback=0.4),
             depth=self.config.getint('DRAIN', 'depth', fallback=4),
             max_children=self.config.getint('DRAIN', 'max_children', fallback=100),
+            extra_delimiters=extra_delimiters,
             profiler=self.profiler
         )
         self.masker = LogMasker(self.config)

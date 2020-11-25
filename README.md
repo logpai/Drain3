@@ -81,6 +81,8 @@ Available parameters are:
 - `[DRAIN]/sim_th` - similarity threshold (default 0.4)
 - `[DRAIN]/depth` - depth of all leaf nodes (default 4)
 - `[DRAIN]/max_children` - max number of children of an internal node (default 100)
+- `[DRAIN]/extra_delimiters` - delimiters to apply when splitting log message into words (in addition to whitespace) (default none).
+    Format is a Python list e.g. `['_', ':']`.
 - `[MASKING]/masking` - parameters masking - in json format (default "")
 - `[SNAPSHOT]/snapshot_interval_minutes` - time interval for new snapshots (default 1)
 - `[SNAPSHOT]/compress_state` - whether to compress the state before saving it. This can be useful when using Kafka persistence. 
@@ -191,6 +193,9 @@ An example drain3.ini file with masking instructions exists in the `examples` fo
 Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for further details.
 
 ## Change Log
+
+##### v0.8.6
+* Added `extra_delimiters` configuration option to Drain  
 
 ##### v0.8.5
 * Profiler improvements  

@@ -32,13 +32,19 @@ class Node:
 
 class Drain:
 
-    def __init__(self, depth=4, sim_th=0.4, max_children=100, profiler: Profiler = NullProfiler()):
+    def __init__(self,
+                 depth=4,
+                 sim_th=0.4,
+                 max_children=100,
+                 extra_delimiters=(),
+                 profiler: Profiler = NullProfiler()):
         """
         Attributes
         ----------
             depth : depth of all leaf nodes (nodes that contain log clusters)
             sim_th : similarity threshold
             max_children : max number of children of an internal node
+            extra_delimiters: delimiters to apply when splitting log message into words (in addition to whitespace).
         """
         self.depth = depth - 2  # number of prefix tokens in each tree path (exclude root and leaf node)
         self.sim_th = sim_th
@@ -46,6 +52,7 @@ class Drain:
         self.clusters = []
         self.root_node = Node("(ROOT)", 0)
         self.profiler = profiler
+        self.extra_delimiters = extra_delimiters
 
     @staticmethod
     def has_numbers(s):
@@ -231,6 +238,9 @@ class Drain:
 
     def add_log_message(self, content: str):
         content = content.strip()
+        for delimiter in self.extra_delimiters:
+            content = content.replace(delimiter, " ")
+
         content_tokens = content.split()
 
         if self.profiler:
