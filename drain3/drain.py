@@ -42,7 +42,8 @@ class Drain:
         Attributes
         ----------
             depth : depth of all leaf nodes (nodes that contain log clusters)
-            sim_th : similarity threshold
+            sim_th : similarity threshold - if percentage of similar tokens for a log message is below this
+                number, a new log cluster will be created.
             max_children : max number of children of an internal node
             extra_delimiters: delimiters to apply when splitting log message into words (in addition to whitespace).
         """
