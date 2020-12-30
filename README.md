@@ -194,6 +194,9 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 
 ## Change Log
 
+##### v0.*.*
+* Decrease memory footprint of the main data structures.
+
 ##### v0.8.6
 * Added `extra_delimiters` configuration option to Drain  
 

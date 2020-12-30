@@ -10,8 +10,10 @@ param_str = '<*>'
 
 
 class LogCluster:
+    __slots__ = ["log_template_tokens", "cluster_id", "size"]
+
     def __init__(self, log_template_tokens: list, cluster_id):
-        self.log_template_tokens = log_template_tokens
+        self.log_template_tokens = tuple(log_template_tokens)
         self.cluster_id = cluster_id
         self.size = 1
 
@@ -23,9 +25,9 @@ class LogCluster:
 
 
 class Node:
-    def __init__(self, key, depth):
-        self.depth = depth
-        self.key = key
+    __slots__ = ["key_to_child_node", "clusters"]
+
+    def __init__(self):
         self.key_to_child_node = {}
         self.clusters = []
 
@@ -50,10 +52,10 @@ class Drain:
         self.depth = depth - 2  # number of prefix tokens in each tree path (exclude root and leaf node)
         self.sim_th = sim_th
         self.max_children = max_children
-        self.clusters = []
-        self.root_node = Node("(ROOT)", 0)
+        self.root_node = Node()
         self.profiler = profiler
-        self.extra_delimiters = extra_delimiters
+        self.extra_delimiters =extra_delimiters
+        self.clusters = []
 
     @staticmethod
     def has_numbers(s):
@@ -99,7 +101,7 @@ class Drain:
     def add_seq_to_prefix_tree(self, root_node, cluster: LogCluster):
         token_count = len(cluster.log_template_tokens)
         if token_count not in root_node.key_to_child_node:
-            first_layer_node = Node(key=token_count, depth=1)
+            first_layer_node = Node()
             root_node.key_to_child_node[token_count] = first_layer_node
         else:
             first_layer_node = root_node.key_to_child_node[token_count]
@@ -126,18 +128,18 @@ class Drain:
                 if not self.has_numbers(token):
                     if param_str in parent_node.key_to_child_node:
                         if len(parent_node.key_to_child_node) < self.max_children:
-                            new_node = Node(key=token, depth=current_depth + 1)
+                            new_node = Node()
                             parent_node.key_to_child_node[token] = new_node
                             parent_node = new_node
                         else:
                             parent_node = parent_node.key_to_child_node[param_str]
                     else:
                         if len(parent_node.key_to_child_node) + 1 < self.max_children:
-                            new_node = Node(key=token, depth=current_depth + 1)
+                            new_node = Node()
                             parent_node.key_to_child_node[token] = new_node
                             parent_node = new_node
                         elif len(parent_node.key_to_child_node) + 1 == self.max_children:
-                            new_node = Node(key=param_str, depth=current_depth + 1)
+                            new_node = Node()
                             parent_node.key_to_child_node[param_str] = new_node
                             parent_node = new_node
                         else:
@@ -145,7 +147,7 @@ class Drain:
 
                 else:
                     if param_str not in parent_node.key_to_child_node:
-                        new_node = Node(key=param_str, depth=current_depth + 1)
+                        new_node = Node()
                         parent_node.key_to_child_node[param_str] = new_node
                         parent_node = new_node
                     else:
@@ -211,26 +213,20 @@ class Drain:
         return ret_val
 
     def print_tree(self):
-        self.print_node(self.root_node, 0)
+        self.print_node("root", self.root_node, 0)
 
-    def print_node(self, node, depth):
-        out_str = ''
-        for i in range(depth):
-            out_str += '\t'
+    def print_node(self, token, node, depth):
+        out_str =  '\t' * depth
 
-        if node.depth == 0:
-            out_str += 'Root'
-        elif node.depth == 1:
-            out_str += '<' + str(node.key) + '>'
+        if depth < 2:
+            out_str += '<' + str(token) + '>'
         else:
-            out_str += node.key
+            out_str += token
 
         print(out_str)
 
-        if node.depth == self.depth:
-            return 1
-        for child in node.key_to_child_node:
-            self.print_node(node.key_to_child_node[child], depth + 1)
+        for token, child in node.key_to_child_node.items():
+            self.print_node(token, child, depth + 1)
 
     @staticmethod
     def num_to_cluster_id(num):
@@ -267,7 +263,7 @@ class Drain:
                 self.profiler.start_section("cluster_exist")
             new_template_tokens = self.get_template(content_tokens, match_cluster.log_template_tokens)
             if ' '.join(new_template_tokens) != ' '.join(match_cluster.log_template_tokens):
-                match_cluster.log_template_tokens = new_template_tokens
+                match_cluster.log_template_tokens = tuple(new_template_tokens)
                 update_type = "cluster_template_changed"
             else:
                 update_type = "none"
