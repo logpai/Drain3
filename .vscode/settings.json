@@ -1,0 +1,19 @@
+{
+    "python.pythonPath": "~/.virtualenvs/drain/bin/python",
+    "python.testing.unittestArgs": [
+        "--verbose",
+        "--top-level-directory",
+        ".",
+        "--start-directory",
+        "tests",
+        "--pattern",
+        "*_test.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.unittestEnabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "python.linting.enabled": true,
+    "python.formatting.provider": "black"
+}
