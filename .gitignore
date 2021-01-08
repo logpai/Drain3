@@ -3,6 +3,7 @@ MANIFEST
 dist/*
 venv/*
 .idea/*
+.vscode/*
 drain3.egg-info/*
 snapshot.txt
 examples/snapshot.txt
