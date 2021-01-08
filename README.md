@@ -196,6 +196,8 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 
 ##### v0.*.*
 * Decrease memory footprint of the main data structures.
+* Added `max_size` option to limit the number of tracked clusters.
+* Changed cluster identifier type from str to int
 
 ##### v0.8.6
 * Added `extra_delimiters` configuration option to Drain  

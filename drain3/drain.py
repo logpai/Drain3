@@ -4,6 +4,7 @@ Author      : LogPAI team
 Modified by : david.ohana@ibm.com, moshikh@il.ibm.com
 License     : MIT
 """
+from cachetools import LRUCache
 from drain3.simple_profiler import Profiler, NullProfiler
 
 param_str = '<*>'
@@ -12,7 +13,7 @@ param_str = '<*>'
 class LogCluster:
     __slots__ = ["log_template_tokens", "cluster_id", "size"]
 
-    def __init__(self, log_template_tokens: list, cluster_id):
+    def __init__(self, log_template_tokens: list, cluster_id: int):
         self.log_template_tokens = tuple(log_template_tokens)
         self.cluster_id = cluster_id
         self.size = 1
@@ -25,19 +26,19 @@ class LogCluster:
 
 
 class Node:
-    __slots__ = ["key_to_child_node", "clusters"]
+    __slots__ = ["key_to_child_node", "cluster_ids"]
 
     def __init__(self):
         self.key_to_child_node = {}
-        self.clusters = []
+        self.cluster_ids = []
 
 
 class Drain:
-
     def __init__(self,
                  depth=4,
                  sim_th=0.4,
                  max_children=100,
+                 max_size=None,
                  extra_delimiters=(),
                  profiler: Profiler = NullProfiler()):
         """
@@ -47,6 +48,7 @@ class Drain:
             sim_th : similarity threshold - if percentage of similar tokens for a log message is below this
                 number, a new log cluster will be created.
             max_children : max number of children of an internal node
+            max_size : max number of tracked clusters (unlimited by default).
             extra_delimiters: delimiters to apply when splitting log message into words (in addition to whitespace).
         """
         self.depth = depth - 2  # number of prefix tokens in each tree path (exclude root and leaf node)
@@ -54,8 +56,9 @@ class Drain:
         self.max_children = max_children
         self.root_node = Node()
         self.profiler = profiler
-        self.extra_delimiters =extra_delimiters
-        self.clusters = []
+        self.extra_delimiters = extra_delimiters
+        self.clusters = {} if max_size is None else LRUCache(maxsize=max_size)
+        self.clusters_counter = 0
 
     @staticmethod
     def has_numbers(s):
@@ -73,7 +76,7 @@ class Drain:
 
         # handle case of empty log string - return the single cluster in that group
         if token_count == 0:
-            return parent_node.clusters[0]
+            return self.clusters.get(parent_node.cluster_ids[0])
 
         # find the leaf node for this log - a path of nodes matching the first N tokens (N=tree depth)
         current_depth = 1
@@ -95,7 +98,7 @@ class Drain:
 
             current_depth += 1
 
-        cluster = self.fast_match(parent_node.clusters, tokens)
+        cluster = self.fast_match(parent_node.cluster_ids, tokens)
         return cluster
 
     def add_seq_to_prefix_tree(self, root_node, cluster: LogCluster):
@@ -110,7 +113,7 @@ class Drain:
 
         # handle case of empty log string
         if len(cluster.log_template_tokens) == 0:
-            parent_node.clusters.append(cluster)
+            parent_node.cluster_ids = [cluster.cluster_id]
             return
 
         current_depth = 1
@@ -120,7 +123,12 @@ class Drain:
             at_max_depth = current_depth == self.depth
             is_last_token = current_depth == token_count
             if at_max_depth or is_last_token:
-                parent_node.clusters.append(cluster)
+                # Clean up stale clusters before adding a new one.
+                new_cluser_keys = [cluster.cluster_id]
+                for cluster_key in parent_node.cluster_ids:
+                    if cluster_key in self.clusters:
+                        new_cluser_keys.append(cluster_key)
+                parent_node.cluster_ids = new_cluser_keys 
                 break
 
             # If token not matched in this layer of existing tree.
@@ -177,14 +185,17 @@ class Drain:
 
         return ret_val, param_count
 
-    def fast_match(self, cluster_list: list, tokens):
+    def fast_match(self, cluster_ids: list, tokens):
         match_cluster = None
 
         max_sim = -1
         max_param_count = -1
         max_cluster = None
 
-        for cluster in cluster_list:
+        for cluster_key in cluster_ids:
+            cluster = self.clusters.get(cluster_key)
+            if cluster is None:
+                continue
             cur_sim, param_count = self.get_seq_distance(cluster.log_template_tokens, tokens)
             if cur_sim > max_sim or (cur_sim == max_sim and param_count > max_param_count):
                 max_sim = cur_sim
@@ -228,11 +239,6 @@ class Drain:
         for token, child in node.key_to_child_node.items():
             self.print_node(token, child, depth + 1)
 
-    @staticmethod
-    def num_to_cluster_id(num):
-        cluster_id = "A{:04d}".format(num)
-        return cluster_id
-
     def add_log_message(self, content: str):
         content = content.strip()
         for delimiter in self.extra_delimiters:
@@ -250,10 +256,10 @@ class Drain:
         if match_cluster is None:
             if self.profiler:
                 self.profiler.start_section("create_cluster")
-            cluster_num = len(self.clusters) + 1
-            cluster_id = self.num_to_cluster_id(cluster_num)
+            self.clusters_counter += 1
+            cluster_id = self.clusters_counter
             match_cluster = LogCluster(content_tokens, cluster_id)
-            self.clusters.append(match_cluster)
+            self.clusters[cluster_id] = match_cluster
             self.add_seq_to_prefix_tree(self.root_node, match_cluster)
             update_type = "cluster_created"
 
@@ -276,6 +282,6 @@ class Drain:
 
     def get_total_cluster_size(self):
         size = 0
-        for c in self.clusters:
+        for c in self.clusters.values():
             size += c.size
         return size
