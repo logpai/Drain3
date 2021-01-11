@@ -38,7 +38,7 @@ class Drain:
                  depth=4,
                  sim_th=0.4,
                  max_children=100,
-                 max_size=None,
+                 max_clusters=None,
                  extra_delimiters=(),
                  profiler: Profiler = NullProfiler()):
         """
@@ -48,7 +48,9 @@ class Drain:
             sim_th : similarity threshold - if percentage of similar tokens for a log message is below this
                 number, a new log cluster will be created.
             max_children : max number of children of an internal node
-            max_size : max number of tracked clusters (unlimited by default).
+            max_clusters : max number of tracked clusters (unlimited by default).
+                When this number is reached, model starts replacing old clusters
+                with a new ones according to the LRU policy.
             extra_delimiters: delimiters to apply when splitting log message into words (in addition to whitespace).
         """
         self.depth = depth - 2  # number of prefix tokens in each tree path (exclude root and leaf node)
@@ -57,7 +59,8 @@ class Drain:
         self.root_node = Node()
         self.profiler = profiler
         self.extra_delimiters = extra_delimiters
-        self.clusters = {} if max_size is None else LRUCache(maxsize=max_size)
+        self.max_clusters = max_clusters
+        self.clusters = {} if max_clusters is None else LRUCache(maxsize=max_clusters)
         self.clusters_counter = 0
 
     @staticmethod
@@ -124,11 +127,11 @@ class Drain:
             is_last_token = current_depth == token_count
             if at_max_depth or is_last_token:
                 # Clean up stale clusters before adding a new one.
-                new_cluser_keys = [cluster.cluster_id]
-                for cluster_key in parent_node.cluster_ids:
-                    if cluster_key in self.clusters:
-                        new_cluser_keys.append(cluster_key)
-                parent_node.cluster_ids = new_cluser_keys 
+                new_cluster_ids = [cluster.cluster_id]
+                for cluster_id in parent_node.cluster_ids:
+                    if cluster_id in self.clusters:
+                        new_cluster_ids.append(cluster_id)
+                parent_node.cluster_ids = new_cluster_ids
                 break
 
             # If token not matched in this layer of existing tree.
@@ -192,8 +195,8 @@ class Drain:
         max_param_count = -1
         max_cluster = None
 
-        for cluster_key in cluster_ids:
-            cluster = self.clusters.get(cluster_key)
+        for cluster_id in cluster_ids:
+            cluster = self.clusters.get(cluster_id)
             if cluster is None:
                 continue
             cur_sim, param_count = self.get_seq_distance(cluster.log_template_tokens, tokens)

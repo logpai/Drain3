@@ -75,16 +75,16 @@ class DrainTest(unittest.TestCase):
         self.assertListEqual(list(map(str.strip, expected)), actual)
         self.assertEqual(8, model.get_total_cluster_size())
 
-    def test_max_size(self):
-        """Verify model respects the max_size option.
+    def test_max_clusters(self):
+        """Verify model respects the max_clusters option.
         
         Key difference between this tests and `test_add_log_message` is that
-        with `max_size` set to 1 model is capable of keeping track of a single
+        with `max_clusters` set to 1 model is capable of keeping track of a single
         cluster at a time. Consequently, when log stream switched form the first
         format to a second format and back model doesn't recognize it and
         returnes a new template with no slots.
         """
-        model = Drain(max_size=1)
+        model = Drain(max_clusters=1)
         entries = str.splitlines(
             """
             Dec 10 07:07:38 LabSZ sshd[24206]: input_userauth_request: invalid user test9 [preauth]
