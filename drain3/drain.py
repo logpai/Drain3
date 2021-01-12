@@ -4,7 +4,7 @@ Author      : LogPAI team
 Modified by : david.ohana@ibm.com, moshikh@il.ibm.com
 License     : MIT
 """
-from cachetools import LRUCache
+from cachetools import LRUCache, Cache
 from drain3.simple_profiler import Profiler, NullProfiler
 
 param_str = '<*>'
@@ -196,7 +196,9 @@ class Drain:
         max_cluster = None
 
         for cluster_id in cluster_ids:
-            cluster = self.clusters.get(cluster_id)
+            # Try to retrieve cluster from cache with bypassing eviction
+            # algorithm as we are only testing candidates for a match.
+            cluster = Cache.get(self.clusters, cluster_id)
             if cluster is None:
                 continue
             cur_sim, param_count = self.get_seq_distance(cluster.log_template_tokens, tokens)
@@ -277,6 +279,8 @@ class Drain:
             else:
                 update_type = "none"
             match_cluster.size += 1
+            # Touch cluster to update its state in the cache.
+            self.clusters.get(match_cluster.cluster_id)
 
         if self.profiler:
             self.profiler.end_section()

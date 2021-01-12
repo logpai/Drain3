@@ -78,31 +78,29 @@ class DrainTest(unittest.TestCase):
     def test_max_clusters(self):
         """Verify model respects the max_clusters option.
         
-        Key difference between this tests and `test_add_log_message` is that
-        with `max_clusters` set to 1 model is capable of keeping track of a single
-        cluster at a time. Consequently, when log stream switched form the first
-        format to a second format and back model doesn't recognize it and
-        returnes a new template with no slots.
+        Key difference between this and other tests is that with `max_clusters`
+        set to 1 model is capable of keeping track of a single cluster at a
+        time. Consequently, when log stream switched form the A format to the B
+        and back model doesn't recognize it and returnes a new template with no
+        slots.
         """
         model = Drain(max_clusters=1)
         entries = str.splitlines(
             """
-            Dec 10 07:07:38 LabSZ sshd[24206]: input_userauth_request: invalid user test9 [preauth]
-            Dec 10 07:08:28 LabSZ sshd[24208]: input_userauth_request: invalid user webmaster [preauth]
-            Dec 10 09:12:32 LabSZ sshd[24490]: Failed password for invalid user ftpuser from 0.0.0.0 port 62891 ssh2
-            Dec 10 09:12:35 LabSZ sshd[24492]: Failed password for invalid user pi from 0.0.0.0 port 49289 ssh2
-            Dec 10 09:12:44 LabSZ sshd[24501]: Failed password for invalid user ftpuser from 0.0.0.0 port 60836 ssh2
-            Dec 10 07:28:03 LabSZ sshd[24245]: input_userauth_request: invalid user pgadmin [preauth]
+            A format 1
+            A format 2
+            B format 1
+            B format 2
+            A format 3
             """
         )
         expected = str.splitlines(
             """
-            Dec 10 07:07:38 LabSZ sshd[24206]: input_userauth_request: invalid user test9 [preauth]
-            Dec 10 <*> LabSZ <*> input_userauth_request: invalid user <*> [preauth]
-            Dec 10 09:12:32 LabSZ sshd[24490]: Failed password for invalid user ftpuser from 0.0.0.0 port 62891 ssh2
-            Dec 10 <*> LabSZ <*> Failed password for invalid user <*> from 0.0.0.0 port <*> ssh2
-            Dec 10 <*> LabSZ <*> Failed password for invalid user <*> from 0.0.0.0 port <*> ssh2
-            Dec 10 07:28:03 LabSZ sshd[24245]: input_userauth_request: invalid user pgadmin [preauth]
+            A format 1
+            A format <*>
+            B format 1
+            B format <*>
+            A format 3
             """
         )
         actual = []
@@ -113,3 +111,44 @@ class DrainTest(unittest.TestCase):
 
         self.assertListEqual(list(map(str.strip, expected)), actual)
         self.assertEqual(1, model.get_total_cluster_size())
+
+    def test_max_clusters_lru(self):
+        """When max number of clusters is reached, then clusters are removed
+        according to the lru policy.
+        """
+        model = Drain(max_clusters=3, depth=3)
+        entries = [
+            "A A foramt 1",
+            "A A foramt 2",
+            "A B format 1",
+            "A B format 2",
+            "B format 1",
+            "B format 2",
+            "A A foramt 3",
+            "C foramt 1",
+            "A B format 3",
+        ]
+        expected = [
+            "A A foramt 1", # LRU = ["A"]
+            "A A foramt <*>",# LRU = ["A"]
+            # Use "A A" prefix to make sure both "A" and "A A" clusters end up
+            # in the same leaf node. This is a setup for an interesting edge
+            # case.
+            "A B format 1", # LRU = ["AA", "A"]
+            "A B format <*>",# LRU = ["AA", "A"]
+            "B format 1", # LRU = ["B", "A A", "A"]
+            "B format <*>", # LRU = ["B", "A A", "A"]
+            "A A foramt <*>", # LRU = ["A", "B", "A A"]
+            "C foramt 1", # LRU = ["C", "A", "B"]
+            # Cluster "A A" should have been removed in the previous step, thus,
+            # it should be recognized as a new cluster with no slots.
+            "A B format 3", # LRU = ["A A', "C", "A"]
+        ]
+        actual = []
+
+        for entry in entries:
+            cluster, _ = model.add_log_message(entry)
+            actual.append(cluster.get_template())
+
+        self.assertListEqual(list(map(str.strip, expected)), actual)
+        self.assertEqual(5, model.get_total_cluster_size())
