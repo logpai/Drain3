@@ -81,6 +81,7 @@ Available parameters are:
 - `[DRAIN]/sim_th` - similarity threshold (default 0.4)
 - `[DRAIN]/depth` - depth of all leaf nodes (default 4)
 - `[DRAIN]/max_children` - max number of children of an internal node (default 100)
+- `[DRAIN]/max_clusters` - max number of tracked clusters (unlimited by default). When this number is reached, model starts replacing old clusters with a new ones according to the LRU cache eviction policy.
 - `[DRAIN]/extra_delimiters` - delimiters to apply when splitting log message into words (in addition to whitespace) (default none).
     Format is a Python list e.g. `['_', ':']`.
 - `[MASKING]/masking` - parameters masking - in json format (default "")

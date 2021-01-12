@@ -46,6 +46,7 @@ class TemplateMiner:
             sim_th=self.config.getfloat('DRAIN', 'sim_th', fallback=0.4),
             depth=self.config.getint('DRAIN', 'depth', fallback=4),
             max_children=self.config.getint('DRAIN', 'max_children', fallback=100),
+            max_clusters=self.config.getint('DRAIN', 'max_clusters', fallback=None),
             extra_delimiters=extra_delimiters,
             profiler=self.profiler
         )
