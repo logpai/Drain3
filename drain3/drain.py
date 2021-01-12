@@ -6,6 +6,7 @@ License     : MIT
 """
 from cachetools import LRUCache, Cache
 from drain3.simple_profiler import Profiler, NullProfiler
+from typing import List, Dict
 
 param_str = '<*>'
 
@@ -29,8 +30,8 @@ class Node:
     __slots__ = ["key_to_child_node", "cluster_ids"]
 
     def __init__(self):
-        self.key_to_child_node = {}
-        self.cluster_ids = []
+        self.key_to_child_node : Dict[str, Node] = {}
+        self.cluster_ids : List[int] = []
 
 
 class Drain:
@@ -60,8 +61,12 @@ class Drain:
         self.profiler = profiler
         self.extra_delimiters = extra_delimiters
         self.max_clusters = max_clusters
-        self.clusters = {} if max_clusters is None else LRUCache(maxsize=max_clusters)
+        self.id_to_cluster = {} if max_clusters is None else LRUCache(maxsize=max_clusters)
         self.clusters_counter = 0
+
+    @property
+    def clusters(self):
+        return self.id_to_cluster.values()
 
     @staticmethod
     def has_numbers(s):
@@ -79,7 +84,7 @@ class Drain:
 
         # handle case of empty log string - return the single cluster in that group
         if token_count == 0:
-            return self.clusters.get(parent_node.cluster_ids[0])
+            return self.id_to_cluster.get(parent_node.cluster_ids[0])
 
         # find the leaf node for this log - a path of nodes matching the first N tokens (N=tree depth)
         current_depth = 1
@@ -129,7 +134,7 @@ class Drain:
                 # Clean up stale clusters before adding a new one.
                 new_cluster_ids = [cluster.cluster_id]
                 for cluster_id in parent_node.cluster_ids:
-                    if cluster_id in self.clusters:
+                    if cluster_id in self.id_to_cluster:
                         new_cluster_ids.append(cluster_id)
                 parent_node.cluster_ids = new_cluster_ids
                 break
@@ -198,7 +203,7 @@ class Drain:
         for cluster_id in cluster_ids:
             # Try to retrieve cluster from cache with bypassing eviction
             # algorithm as we are only testing candidates for a match.
-            cluster = Cache.get(self.clusters, cluster_id)
+            cluster = Cache.get(self.id_to_cluster, cluster_id)
             if cluster is None:
                 continue
             cur_sim, param_count = self.get_seq_distance(cluster.log_template_tokens, tokens)
@@ -264,7 +269,7 @@ class Drain:
             self.clusters_counter += 1
             cluster_id = self.clusters_counter
             match_cluster = LogCluster(content_tokens, cluster_id)
-            self.clusters[cluster_id] = match_cluster
+            self.id_to_cluster[cluster_id] = match_cluster
             self.add_seq_to_prefix_tree(self.root_node, match_cluster)
             update_type = "cluster_created"
 
@@ -280,7 +285,7 @@ class Drain:
                 update_type = "none"
             match_cluster.size += 1
             # Touch cluster to update its state in the cache.
-            self.clusters.get(match_cluster.cluster_id)
+            self.id_to_cluster.get(match_cluster.cluster_id)
 
         if self.profiler:
             self.profiler.end_section()
@@ -289,6 +294,6 @@ class Drain:
 
     def get_total_cluster_size(self):
         size = 0
-        for c in self.clusters.values():
+        for c in self.id_to_cluster.values():
             size += c.size
         return size
