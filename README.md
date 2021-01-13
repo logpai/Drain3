@@ -199,10 +199,11 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 
 ## Change Log
 
-##### v0.*.*
+##### v0.9.0
 * Decrease memory footprint of the main data structures.
 * Added `max_clusters` option to limit the number of tracked clusters.
 * Changed cluster identifier type from str to int
+* Added more unit tests and CI
 
 ##### v0.8.6
 * Added `extra_delimiters` configuration option to Drain  
@@ -223,7 +224,6 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 * Bugfix in profiling configuration read
 
 ##### v0.8.0
-
 * Added time profiling support (disabled by default) 
 * Added cluster ID to snapshot reason log (credit: @boernd) 
 * Minor Readability and documentation improvements in Drain
