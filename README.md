@@ -45,7 +45,7 @@ A possible Drain3 use case in this blog post: [Use open source Drain3 log-templa
 - **Streaming**. Support feeding Drain with messages one-be-one.
 - **Masking**. Replace some message parts (e.g numbers, IPs, emails) with wildcards. This improves the accuracy of template mining.
 - **Packaging**. As a pip package. 
-- **Memory efficiency**. Decrease the memory footprint of internal data structures and introduce cache to control max memory consumed.
+- **Memory efficiency**. Decrease the memory footprint of internal data structures and introduce cache to control max memory consumed (thanks to @StanislawSwierc)
 
 #### Expected Input and Output
 
