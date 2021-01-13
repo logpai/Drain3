@@ -4,14 +4,18 @@ Author      : LogPAI team
 Modified by : david.ohana@ibm.com, moshikh@il.ibm.com
 License     : MIT
 """
+from cachetools import LRUCache, Cache
 from drain3.simple_profiler import Profiler, NullProfiler
+from typing import List, Dict
 
 param_str = '<*>'
 
 
 class LogCluster:
-    def __init__(self, log_template_tokens: list, cluster_id):
-        self.log_template_tokens = log_template_tokens
+    __slots__ = ["log_template_tokens", "cluster_id", "size"]
+
+    def __init__(self, log_template_tokens: list, cluster_id: int):
+        self.log_template_tokens = tuple(log_template_tokens)
         self.cluster_id = cluster_id
         self.size = 1
 
@@ -23,19 +27,19 @@ class LogCluster:
 
 
 class Node:
-    def __init__(self, key, depth):
-        self.depth = depth
-        self.key = key
-        self.key_to_child_node = {}
-        self.clusters = []
+    __slots__ = ["key_to_child_node", "cluster_ids"]
+
+    def __init__(self):
+        self.key_to_child_node : Dict[str, Node] = {}
+        self.cluster_ids : List[int] = []
 
 
 class Drain:
-
     def __init__(self,
                  depth=4,
                  sim_th=0.4,
                  max_children=100,
+                 max_clusters=None,
                  extra_delimiters=(),
                  profiler: Profiler = NullProfiler()):
         """
@@ -45,15 +49,24 @@ class Drain:
             sim_th : similarity threshold - if percentage of similar tokens for a log message is below this
                 number, a new log cluster will be created.
             max_children : max number of children of an internal node
+            max_clusters : max number of tracked clusters (unlimited by default).
+                When this number is reached, model starts replacing old clusters
+                with a new ones according to the LRU policy.
             extra_delimiters: delimiters to apply when splitting log message into words (in addition to whitespace).
         """
         self.depth = depth - 2  # number of prefix tokens in each tree path (exclude root and leaf node)
         self.sim_th = sim_th
         self.max_children = max_children
-        self.clusters = []
-        self.root_node = Node("(ROOT)", 0)
+        self.root_node = Node()
         self.profiler = profiler
         self.extra_delimiters = extra_delimiters
+        self.max_clusters = max_clusters
+        self.id_to_cluster = {} if max_clusters is None else LRUCache(maxsize=max_clusters)
+        self.clusters_counter = 0
+
+    @property
+    def clusters(self):
+        return self.id_to_cluster.values()
 
     @staticmethod
     def has_numbers(s):
@@ -71,7 +84,7 @@ class Drain:
 
         # handle case of empty log string - return the single cluster in that group
         if token_count == 0:
-            return parent_node.clusters[0]
+            return self.id_to_cluster.get(parent_node.cluster_ids[0])
 
         # find the leaf node for this log - a path of nodes matching the first N tokens (N=tree depth)
         current_depth = 1
@@ -93,13 +106,13 @@ class Drain:
 
             current_depth += 1
 
-        cluster = self.fast_match(parent_node.clusters, tokens)
+        cluster = self.fast_match(parent_node.cluster_ids, tokens)
         return cluster
 
     def add_seq_to_prefix_tree(self, root_node, cluster: LogCluster):
         token_count = len(cluster.log_template_tokens)
         if token_count not in root_node.key_to_child_node:
-            first_layer_node = Node(key=token_count, depth=1)
+            first_layer_node = Node()
             root_node.key_to_child_node[token_count] = first_layer_node
         else:
             first_layer_node = root_node.key_to_child_node[token_count]
@@ -108,7 +121,7 @@ class Drain:
 
         # handle case of empty log string
         if len(cluster.log_template_tokens) == 0:
-            parent_node.clusters.append(cluster)
+            parent_node.cluster_ids = [cluster.cluster_id]
             return
 
         current_depth = 1
@@ -118,7 +131,12 @@ class Drain:
             at_max_depth = current_depth == self.depth
             is_last_token = current_depth == token_count
             if at_max_depth or is_last_token:
-                parent_node.clusters.append(cluster)
+                # Clean up stale clusters before adding a new one.
+                new_cluster_ids = [cluster.cluster_id]
+                for cluster_id in parent_node.cluster_ids:
+                    if cluster_id in self.id_to_cluster:
+                        new_cluster_ids.append(cluster_id)
+                parent_node.cluster_ids = new_cluster_ids
                 break
 
             # If token not matched in this layer of existing tree.
@@ -126,18 +144,18 @@ class Drain:
                 if not self.has_numbers(token):
                     if param_str in parent_node.key_to_child_node:
                         if len(parent_node.key_to_child_node) < self.max_children:
-                            new_node = Node(key=token, depth=current_depth + 1)
+                            new_node = Node()
                             parent_node.key_to_child_node[token] = new_node
                             parent_node = new_node
                         else:
                             parent_node = parent_node.key_to_child_node[param_str]
                     else:
                         if len(parent_node.key_to_child_node) + 1 < self.max_children:
-                            new_node = Node(key=token, depth=current_depth + 1)
+                            new_node = Node()
                             parent_node.key_to_child_node[token] = new_node
                             parent_node = new_node
                         elif len(parent_node.key_to_child_node) + 1 == self.max_children:
-                            new_node = Node(key=param_str, depth=current_depth + 1)
+                            new_node = Node()
                             parent_node.key_to_child_node[param_str] = new_node
                             parent_node = new_node
                         else:
@@ -145,7 +163,7 @@ class Drain:
 
                 else:
                     if param_str not in parent_node.key_to_child_node:
-                        new_node = Node(key=param_str, depth=current_depth + 1)
+                        new_node = Node()
                         parent_node.key_to_child_node[param_str] = new_node
                         parent_node = new_node
                     else:
@@ -175,14 +193,19 @@ class Drain:
 
         return ret_val, param_count
 
-    def fast_match(self, cluster_list: list, tokens):
+    def fast_match(self, cluster_ids: list, tokens):
         match_cluster = None
 
         max_sim = -1
         max_param_count = -1
         max_cluster = None
 
-        for cluster in cluster_list:
+        for cluster_id in cluster_ids:
+            # Try to retrieve cluster from cache with bypassing eviction
+            # algorithm as we are only testing candidates for a match.
+            cluster = Cache.get(self.id_to_cluster, cluster_id)
+            if cluster is None:
+                continue
             cur_sim, param_count = self.get_seq_distance(cluster.log_template_tokens, tokens)
             if cur_sim > max_sim or (cur_sim == max_sim and param_count > max_param_count):
                 max_sim = cur_sim
@@ -211,31 +234,20 @@ class Drain:
         return ret_val
 
     def print_tree(self):
-        self.print_node(self.root_node, 0)
+        self.print_node("root", self.root_node, 0)
 
-    def print_node(self, node, depth):
-        out_str = ''
-        for i in range(depth):
-            out_str += '\t'
+    def print_node(self, token, node, depth):
+        out_str =  '\t' * depth
 
-        if node.depth == 0:
-            out_str += 'Root'
-        elif node.depth == 1:
-            out_str += '<' + str(node.key) + '>'
+        if depth < 2:
+            out_str += '<' + str(token) + '>'
         else:
-            out_str += node.key
+            out_str += token
 
         print(out_str)
 
-        if node.depth == self.depth:
-            return 1
-        for child in node.key_to_child_node:
-            self.print_node(node.key_to_child_node[child], depth + 1)
-
-    @staticmethod
-    def num_to_cluster_id(num):
-        cluster_id = "A{:04d}".format(num)
-        return cluster_id
+        for token, child in node.key_to_child_node.items():
+            self.print_node(token, child, depth + 1)
 
     def add_log_message(self, content: str):
         content = content.strip()
@@ -254,10 +266,10 @@ class Drain:
         if match_cluster is None:
             if self.profiler:
                 self.profiler.start_section("create_cluster")
-            cluster_num = len(self.clusters) + 1
-            cluster_id = self.num_to_cluster_id(cluster_num)
+            self.clusters_counter += 1
+            cluster_id = self.clusters_counter
             match_cluster = LogCluster(content_tokens, cluster_id)
-            self.clusters.append(match_cluster)
+            self.id_to_cluster[cluster_id] = match_cluster
             self.add_seq_to_prefix_tree(self.root_node, match_cluster)
             update_type = "cluster_created"
 
@@ -267,11 +279,13 @@ class Drain:
                 self.profiler.start_section("cluster_exist")
             new_template_tokens = self.get_template(content_tokens, match_cluster.log_template_tokens)
             if ' '.join(new_template_tokens) != ' '.join(match_cluster.log_template_tokens):
-                match_cluster.log_template_tokens = new_template_tokens
+                match_cluster.log_template_tokens = tuple(new_template_tokens)
                 update_type = "cluster_template_changed"
             else:
                 update_type = "none"
             match_cluster.size += 1
+            # Touch cluster to update its state in the cache.
+            self.id_to_cluster.get(match_cluster.cluster_id)
 
         if self.profiler:
             self.profiler.end_section()
@@ -280,6 +294,6 @@ class Drain:
 
     def get_total_cluster_size(self):
         size = 0
-        for c in self.clusters:
+        for c in self.id_to_cluster.values():
             size += c.size
         return size

@@ -9,6 +9,7 @@ verify_ssl = true
 jsonpickle = "*"
 kafka-python = "*"
 redis = "*"
+cachetools = "*"
 
 [requires]
 python_version = "3.6"

@@ -74,3 +74,81 @@ class DrainTest(unittest.TestCase):
 
         self.assertListEqual(list(map(str.strip, expected)), actual)
         self.assertEqual(8, model.get_total_cluster_size())
+
+    def test_max_clusters(self):
+        """Verify model respects the max_clusters option.
+        
+        Key difference between this and other tests is that with `max_clusters`
+        set to 1 model is capable of keeping track of a single cluster at a
+        time. Consequently, when log stream switched form the A format to the B
+        and back model doesn't recognize it and returnes a new template with no
+        slots.
+        """
+        model = Drain(max_clusters=1)
+        entries = str.splitlines(
+            """
+            A format 1
+            A format 2
+            B format 1
+            B format 2
+            A format 3
+            """
+        )
+        expected = str.splitlines(
+            """
+            A format 1
+            A format <*>
+            B format 1
+            B format <*>
+            A format 3
+            """
+        )
+        actual = []
+
+        for entry in entries:
+            cluster, change_type = model.add_log_message(entry)
+            actual.append(cluster.get_template())
+
+        self.assertListEqual(list(map(str.strip, expected)), actual)
+        self.assertEqual(1, model.get_total_cluster_size())
+
+    def test_max_clusters_lru(self):
+        """When max number of clusters is reached, then clusters are removed
+        according to the lru policy.
+        """
+        model = Drain(max_clusters=3, depth=3)
+        entries = [
+            "A A foramt 1",
+            "A A foramt 2",
+            "A B format 1",
+            "A B format 2",
+            "B format 1",
+            "B format 2",
+            "A A foramt 3",
+            "C foramt 1",
+            "A B format 3",
+        ]
+        expected = [
+            "A A foramt 1", # LRU = ["A"]
+            "A A foramt <*>",# LRU = ["A"]
+            # Use "A A" prefix to make sure both "A" and "A A" clusters end up
+            # in the same leaf node. This is a setup for an interesting edge
+            # case.
+            "A B format 1", # LRU = ["AA", "A"]
+            "A B format <*>",# LRU = ["AA", "A"]
+            "B format 1", # LRU = ["B", "A A", "A"]
+            "B format <*>", # LRU = ["B", "A A", "A"]
+            "A A foramt <*>", # LRU = ["A", "B", "A A"]
+            "C foramt 1", # LRU = ["C", "A", "B"]
+            # Cluster "A A" should have been removed in the previous step, thus,
+            # it should be recognized as a new cluster with no slots.
+            "A B format 3", # LRU = ["A A', "C", "A"]
+        ]
+        actual = []
+
+        for entry in entries:
+            cluster, _ = model.add_log_message(entry)
+            actual.append(cluster.get_template())
+
+        self.assertListEqual(list(map(str.strip, expected)), actual)
+        self.assertEqual(5, model.get_total_cluster_size())

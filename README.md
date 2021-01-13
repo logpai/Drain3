@@ -45,6 +45,7 @@ A possible Drain3 use case in this blog post: [Use open source Drain3 log-templa
 - **Streaming**. Support feeding Drain with messages one-be-one.
 - **Masking**. Replace some message parts (e.g numbers, IPs, emails) with wildcards. This improves the accuracy of template mining.
 - **Packaging**. As a pip package. 
+- **Memory efficiency**. Decrease the memory footprint of internal data structures and introduce cache to control max memory consumed.
 
 #### Expected Input and Output
 
@@ -81,6 +82,7 @@ Available parameters are:
 - `[DRAIN]/sim_th` - similarity threshold (default 0.4)
 - `[DRAIN]/depth` - depth of all leaf nodes (default 4)
 - `[DRAIN]/max_children` - max number of children of an internal node (default 100)
+- `[DRAIN]/max_clusters` - max number of tracked clusters (unlimited by default). When this number is reached, model starts replacing old clusters with a new ones according to the LRU cache eviction policy.
 - `[DRAIN]/extra_delimiters` - delimiters to apply when splitting log message into words (in addition to whitespace) (default none).
     Format is a Python list e.g. `['_', ':']`.
 - `[MASKING]/masking` - parameters masking - in json format (default "")
@@ -151,6 +153,9 @@ to change Kafka endpoint (default is `localhost:9092`).
 Drain3 persistence modes can be easily extended to another medium / database by 
 inheriting the [PersistenceHandler](drain3/persistence_handler.py) class.
 
+## Memory efficiency
+This feature limits the max memory used by the model. It is particularly important for large and possibly unbounded log streams. This feature is controlled by the `max_clusters​` parameter, which sets the max number of clusters/templates trarcked by the model. When the limit is reached, new templates start to replace the old ones according to the Least Recently Used (LRU) eviction policy. This makes the model adapt quickly to the most recent templates in the log stream. 
+
 
 ## Installation
 
@@ -193,6 +198,11 @@ An example drain3.ini file with masking instructions exists in the `examples` fo
 Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for further details.
 
 ## Change Log
+
+##### v0.*.*
+* Decrease memory footprint of the main data structures.
+* Added `max_clusters` option to limit the number of tracked clusters.
+* Changed cluster identifier type from str to int
 
 ##### v0.8.6
 * Added `extra_delimiters` configuration option to Drain  
