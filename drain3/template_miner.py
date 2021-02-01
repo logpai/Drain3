@@ -19,6 +19,8 @@ from drain3.template_miner_config import TemplateMinerConfig
 
 logger = logging.getLogger(__name__)
 
+config_filename = 'drain3.ini'
+
 
 class TemplateMiner:
 
@@ -28,8 +30,9 @@ class TemplateMiner:
         logger.info("Starting Drain3 template miner")
 
         if config is None:
+            logger.info(f"Loading configuration from {config_filename}")
             config = TemplateMinerConfig()
-            config.load()
+            config.load(config_filename)
 
         self.config = config
 

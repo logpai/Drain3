@@ -21,36 +21,41 @@ class TemplateMinerConfig:
         self.drain_max_clusters = None
         self.masking_instructions = []
 
-    def load(self, config_filename='drain3.ini'):
+    def load(self, config_filename: str):
         parser = configparser.ConfigParser()
         read_files = parser.read(config_filename)
         if len(read_files) == 0:
             logger.warning(f"config file not found: {config_filename}")
 
-        self.profiling_enabled = parser.getboolean('PROFILING', 'enabled',
+        section_profiling = 'PROFILING'
+        section_snapshot = 'SNAPSHOT'
+        section_drain = 'DRAIN'
+        section_masking = 'MASKING'
+
+        self.profiling_enabled = parser.getboolean(section_profiling, 'enabled',
                                                    fallback=self.profiling_enabled)
-        self.profiling_report_sec = parser.getint('PROFILING', 'report_sec',
+        self.profiling_report_sec = parser.getint(section_profiling, 'report_sec',
                                                   fallback=self.profiling_report_sec)
 
-        self.snapshot_interval_minutes = parser.getint('SNAPSHOT', 'snapshot_interval_minutes',
+        self.snapshot_interval_minutes = parser.getint(section_snapshot, 'snapshot_interval_minutes',
                                                        fallback=self.snapshot_interval_minutes)
-        self.snapshot_compress_state = parser.getboolean('SNAPSHOT', 'compress_state',
+        self.snapshot_compress_state = parser.getboolean(section_snapshot, 'compress_state',
                                                          fallback=self.snapshot_compress_state)
 
-        drain_extra_delimiters_str = parser.get('DRAIN', 'extra_delimiters',
+        drain_extra_delimiters_str = parser.get(section_drain, 'extra_delimiters',
                                                 fallback=str(self.drain_extra_delimiters))
         self.drain_extra_delimiters = ast.literal_eval(drain_extra_delimiters_str)
 
-        self.drain_sim_th = parser.getfloat('DRAIN', 'sim_th',
+        self.drain_sim_th = parser.getfloat(section_drain, 'sim_th',
                                             fallback=self.drain_sim_th)
-        self.drain_depth = parser.getint('DRAIN', 'depth',
+        self.drain_depth = parser.getint(section_drain, 'depth',
                                          fallback=self.drain_depth)
-        self.drain_max_children = parser.getint('DRAIN', 'max_children',
+        self.drain_max_children = parser.getint(section_drain, 'max_children',
                                                 fallback=self.drain_max_children)
-        self.drain_max_clusters = parser.getint('DRAIN', 'max_clusters',
+        self.drain_max_clusters = parser.getint(section_drain, 'max_clusters',
                                                 fallback=self.drain_max_clusters)
 
-        masking_instructions_str = parser.get('MASKING', 'masking',
+        masking_instructions_str = parser.get(section_masking, 'masking',
                                               fallback=str(self.masking_instructions))
         masking_instructions = []
         masking_list = json.loads(masking_instructions_str)
