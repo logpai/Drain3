@@ -4,9 +4,7 @@ Author      : David Ohana, Moshik Hershcovitch, Eran Raichstein
 Author_email: david.ohana@ibm.com, moshikh@il.ibm.com, eranra@il.ibm.com
 License     : MIT
 """
-import ast
 import base64
-import configparser
 import logging
 import time
 import zlib
@@ -17,40 +15,39 @@ from drain3.drain import Drain
 from drain3.masking import LogMasker
 from drain3.persistence_handler import PersistenceHandler
 from drain3.simple_profiler import SimpleProfiler, NullProfiler, Profiler
+from drain3.template_miner_config import TemplateMinerConfig
 
 logger = logging.getLogger(__name__)
-
-config_filename = 'drain3.ini'
 
 
 class TemplateMiner:
 
-    def __init__(self, persistence_handler: PersistenceHandler = None):
+    def __init__(self,
+                 persistence_handler: PersistenceHandler = None,
+                 config: TemplateMinerConfig = None):
         logger.info("Starting Drain3 template miner")
-        self.config = configparser.ConfigParser()
-        self.config.read(config_filename)
+
+        if config is None:
+            config = TemplateMinerConfig()
+            config.load()
+
+        self.config = config
 
         self.profiler: Profiler = NullProfiler()
-        self.profiling_report_sec = self.config.getint('PROFILING', 'report_sec', fallback=60)
-        if self.config.getboolean('PROFILING', 'enabled', fallback=False):
+        if self.config.profiling_enabled:
             self.profiler = SimpleProfiler()
 
         self.persistence_handler = persistence_handler
-        self.snapshot_interval_seconds = self.config.getint('SNAPSHOT', 'snapshot_interval_minutes', fallback=5) * 60
-        self.compress_state = self.config.getboolean('SNAPSHOT', 'compress_state', fallback=True)
-
-        extra_delimiters = self.config.get('DRAIN', 'extra_delimiters', fallback="[]")
-        extra_delimiters = ast.literal_eval(extra_delimiters)
 
         self.drain = Drain(
-            sim_th=self.config.getfloat('DRAIN', 'sim_th', fallback=0.4),
-            depth=self.config.getint('DRAIN', 'depth', fallback=4),
-            max_children=self.config.getint('DRAIN', 'max_children', fallback=100),
-            max_clusters=self.config.getint('DRAIN', 'max_clusters', fallback=None),
-            extra_delimiters=extra_delimiters,
+            sim_th=self.config.drain_sim_th,
+            depth=self.config.drain_depth,
+            max_children=self.config.drain_max_children,
+            max_clusters=self.config.drain_max_clusters,
+            extra_delimiters=self.config.drain_extra_delimiters,
             profiler=self.profiler
         )
-        self.masker = LogMasker(self.config)
+        self.masker = LogMasker(self.config.masking_instructions)
         self.last_save_time = time.time()
         if persistence_handler is not None:
             self.load_state()
@@ -63,7 +60,7 @@ class TemplateMiner:
             logger.info("Saved state not found")
             return
 
-        if self.compress_state:
+        if self.config.snapshot_compress_state:
             state = zlib.decompress(base64.b64decode(state))
 
         drain: Drain = jsonpickle.loads(state)
@@ -75,15 +72,12 @@ class TemplateMiner:
             keys.append(i)
         for key in keys:
             drain.root_node.key_to_child_node[int(key)] = drain.root_node.key_to_child_node.pop(key)
-        
-        # After loading, the keys of "id_to_cluster" are string instead of int,
-        # so we have to cast them to int
-        keys = []
-        for i in drain.id_to_cluster.keys():
-            keys.append(i)
+
+        # json-pickle encode keys as string by default, so we have to convert those back to int
+        keys = drain.id_to_cluster.keys()
         for key in keys:
             drain.id_to_cluster[int(key)] = drain.id_to_cluster.pop(key)
-            
+
         drain.profiler = self.profiler
 
         self.drain = drain
@@ -92,7 +86,7 @@ class TemplateMiner:
 
     def save_state(self, snapshot_reason):
         state = jsonpickle.dumps(self.drain).encode('utf-8')
-        if self.compress_state:
+        if self.config.snapshot_compress_state:
             state = base64.b64encode(zlib.compress(state))
 
         logger.info(f"Saving state of {len(self.drain.clusters)} clusters "
@@ -105,7 +99,7 @@ class TemplateMiner:
             return "{} ({})".format(change_type, cluster_id)
 
         diff_time_sec = time.time() - self.last_save_time
-        if diff_time_sec >= self.snapshot_interval_seconds:
+        if diff_time_sec >= self.config.snapshot_interval_minutes * 60:
             return "periodic"
 
         return None
@@ -137,5 +131,5 @@ class TemplateMiner:
             self.profiler.end_section()
 
         self.profiler.end_section("total")
-        self.profiler.report(self.profiling_report_sec)
+        self.profiler.report(self.config.profiling_report_sec)
         return result

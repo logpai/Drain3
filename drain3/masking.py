@@ -4,8 +4,6 @@ Author      : Moshik Hershcovitch
 Author_email: moshikh@il.ibm.com
 License     : MIT
 """
-import configparser
-import json
 import logging
 import re
 from typing import List
@@ -48,17 +46,7 @@ class RegexMasker:
 
 
 class LogMasker:
-    def __init__(self, config: configparser.ConfigParser):
-        masking_instructions = []
-        self.masker = None
-        masking_str = config.get('MASKING', 'masking', fallback="[]")
-        masking_list = json.loads(masking_str)
-        for mi in masking_list:
-            logger.info("Adding custom mask {} --> {}".format(
-                mi['mask_with'],
-                mi['regex_pattern']))
-            instruction = MaskingInstruction(mi['regex_pattern'], mi['mask_with'])
-            masking_instructions.append(instruction)
+    def __init__(self, masking_instructions: List[MaskingInstruction]):
         self.masker = RegexMasker(masking_instructions)
 
     def mask(self, content: str):
