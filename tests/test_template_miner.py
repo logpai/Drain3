@@ -9,6 +9,8 @@ from drain3.template_miner_config import TemplateMinerConfig
 
 
 class TemplateMinerTest(unittest.TestCase):
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
+
     def test_load_config(self):
         config = TemplateMinerConfig()
         config.load("drain3_test.ini")
@@ -16,19 +18,25 @@ class TemplateMinerTest(unittest.TestCase):
         self.assertListEqual(["_"], config.drain_extra_delimiters)
         self.assertEqual(7, len(config.masking_instructions))
 
-    def test_save_load_snapshot(self):
-        logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
+    def test_save_load_snapshot_unlimited_clusters(self):
+        self.save_load_snapshot(None)
 
+    def test_save_load_snapshot_limited_clusters(self):
+        self.save_load_snapshot(10)
+
+    def save_load_snapshot(self, max_clusters):
         persistence = MemoryBufferPersistence()
 
-        template_miner1 = TemplateMiner(persistence)
+        config = TemplateMinerConfig()
+        config.drain_max_clusters = max_clusters
+        template_miner1 = TemplateMiner(persistence, config)
         print(template_miner1.add_log_message("hello"))
         print(template_miner1.add_log_message("hello ABC"))
         print(template_miner1.add_log_message("hello BCD"))
         print(template_miner1.add_log_message("hello XYZ"))
         print(template_miner1.add_log_message("goodbye XYZ"))
 
-        template_miner2 = TemplateMiner(persistence)
+        template_miner2 = TemplateMiner(persistence, config)
 
         self.assertListEqual(list(template_miner1.drain.id_to_cluster.keys()),
                              list(template_miner2.drain.id_to_cluster.keys()))
