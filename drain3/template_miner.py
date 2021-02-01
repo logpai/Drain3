@@ -75,7 +75,15 @@ class TemplateMiner:
             keys.append(i)
         for key in keys:
             drain.root_node.key_to_child_node[int(key)] = drain.root_node.key_to_child_node.pop(key)
-
+        
+        # After loading, the keys of "id_to_cluster" are string instead of int,
+        # so we have to cast them to int
+        keys = []
+        for i in drain.id_to_cluster.keys():
+            keys.append(i)
+        for key in keys:
+            drain.id_to_cluster[int(key)] = drain.id_to_cluster.pop(key)
+            
         drain.profiler = self.profiler
 
         self.drain = drain
