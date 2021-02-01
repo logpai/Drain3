@@ -65,14 +65,6 @@ class TemplateMiner:
 
         drain: Drain = jsonpickle.loads(state)
 
-        # After loading, the keys of "parser.root_node.key_to_child" are string instead of int,
-        # so we have to cast them to int
-        keys = []
-        for i in drain.root_node.key_to_child_node.keys():
-            keys.append(i)
-        for key in keys:
-            drain.root_node.key_to_child_node[int(key)] = drain.root_node.key_to_child_node.pop(key)
-
         # json-pickle encode keys as string by default, so we have to convert those back to int
         keys = drain.id_to_cluster.keys()
         for key in keys:

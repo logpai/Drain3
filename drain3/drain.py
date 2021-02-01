@@ -80,7 +80,7 @@ class Drain:
 
         # at first level, children are grouped by token (word) count
         token_count = len(tokens)
-        parent_node = root_node.key_to_child_node.get(token_count)
+        parent_node = root_node.key_to_child_node.get(str(token_count))
 
         # no template with same token count yet
         if parent_node is None:
@@ -114,7 +114,7 @@ class Drain:
         return cluster
 
     def add_seq_to_prefix_tree(self, root_node, cluster: LogCluster):
-        token_count = len(cluster.log_template_tokens)
+        token_count = str(len(cluster.log_template_tokens))
         if token_count not in root_node.key_to_child_node:
             first_layer_node = Node()
             root_node.key_to_child_node[token_count] = first_layer_node
