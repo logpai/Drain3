@@ -199,6 +199,16 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 
 ## Change Log
 
+##### v0.9.1
+* Added option to configure `TemplateMiner` using a configuration object
+  (without `.ini` file).
+* Support for `print_tree()` to a file/stream.
+* Added `MemoryBufferPersistence`
+* Added unit tests for state save/load.
+* Bug fix: missing type-conversion in state loading, introduced in v0.9.0   
+* Refactor: Drain prefix tree keys are now of type `str` also for 1st level 
+  (was `int` before), for type consistency. 
+
 ##### v0.9.0
 * Decrease memory footprint of the main data structures.
 * Added `max_clusters` option to limit the number of tracked clusters.
