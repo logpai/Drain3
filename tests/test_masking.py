@@ -1,10 +1,9 @@
-import re
 import unittest
 
 from drain3.masking import MaskingInstruction, RegexMasker
 
 
-class TestMasking(unittest.TestCase):
+class MaskingTest(unittest.TestCase):
     def test(self):
         s = "D9 test 999 888 1A ccc 3"
         mi = MaskingInstruction(r'((?<=[^A-Za-z0-9])|^)([\-\+]?\d+)((?=[^A-Za-z0-9])|$)', "NUM")

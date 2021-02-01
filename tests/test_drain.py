@@ -1,4 +1,5 @@
 import unittest
+
 from drain3.drain import Drain
 
 
@@ -129,20 +130,20 @@ class DrainTest(unittest.TestCase):
             "A B format 3",
         ]
         expected = [
-            "A A foramt 1", # LRU = ["A"]
-            "A A foramt <*>",# LRU = ["A"]
+            "A A foramt 1",  # LRU = ["A"]
+            "A A foramt <*>",  # LRU = ["A"]
             # Use "A A" prefix to make sure both "A" and "A A" clusters end up
             # in the same leaf node. This is a setup for an interesting edge
             # case.
-            "A B format 1", # LRU = ["AA", "A"]
-            "A B format <*>",# LRU = ["AA", "A"]
-            "B format 1", # LRU = ["B", "A A", "A"]
-            "B format <*>", # LRU = ["B", "A A", "A"]
-            "A A foramt <*>", # LRU = ["A", "B", "A A"]
-            "C foramt 1", # LRU = ["C", "A", "B"]
+            "A B format 1",  # LRU = ["AA", "A"]
+            "A B format <*>",  # LRU = ["AA", "A"]
+            "B format 1",  # LRU = ["B", "A A", "A"]
+            "B format <*>",  # LRU = ["B", "A A", "A"]
+            "A A foramt <*>",  # LRU = ["A", "B", "A A"]
+            "C foramt 1",  # LRU = ["C", "A", "B"]
             # Cluster "A A" should have been removed in the previous step, thus,
             # it should be recognized as a new cluster with no slots.
-            "A B format 3", # LRU = ["A A', "C", "A"]
+            "A B format 3",  # LRU = ["A A', "C", "A"]
         ]
         actual = []
 
@@ -152,3 +153,34 @@ class DrainTest(unittest.TestCase):
 
         self.assertListEqual(list(map(str.strip, expected)), actual)
         self.assertEqual(5, model.get_total_cluster_size())
+
+    def test_save_load_snapshot(self):
+        model = Drain()
+        entries = str.splitlines(
+            """
+            Dec 10 07:07:38 LabSZ sshd[24206]: input_userauth_request: invalid user test9 [preauth]
+            Dec 10 07:08:28 LabSZ sshd[24208]: input_userauth_request: invalid user webmaster [preauth]
+            Dec 10 09:12:32 LabSZ sshd[24490]: Failed password for invalid user ftpuser from 0.0.0.0 port 62891 ssh2
+            Dec 10 09:12:35 LabSZ sshd[24492]: Failed password for invalid user pi from 0.0.0.0 port 49289 ssh2
+            Dec 10 09:12:44 LabSZ sshd[24501]: Failed password for invalid user ftpuser from 0.0.0.0 port 60836 ssh2
+            Dec 10 07:28:03 LabSZ sshd[24245]: input_userauth_request: invalid user pgadmin [preauth]
+            """
+        )
+        expected = str.splitlines(
+            """
+            Dec 10 07:07:38 LabSZ sshd[24206]: input_userauth_request: invalid user test9 [preauth]
+            Dec 10 <*> LabSZ <*> input_userauth_request: invalid user <*> [preauth]
+            Dec 10 09:12:32 LabSZ sshd[24490]: Failed password for invalid user ftpuser from 0.0.0.0 port 62891 ssh2
+            Dec 10 <*> LabSZ <*> Failed password for invalid user <*> from 0.0.0.0 port <*> ssh2
+            Dec 10 <*> LabSZ <*> Failed password for invalid user <*> from 0.0.0.0 port <*> ssh2
+            Dec 10 <*> LabSZ <*> input_userauth_request: invalid user <*> [preauth]
+            """
+        )
+        actual = []
+
+        for entry in entries:
+            cluster, change_type = model.add_log_message(entry)
+            actual.append(cluster.get_template())
+
+        self.assertListEqual(list(map(str.strip, expected)), actual)
+        self.assertEqual(8, model.get_total_cluster_size())
