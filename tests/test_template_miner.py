@@ -1,5 +1,6 @@
 import io
 import logging
+import os
 import sys
 import unittest
 
@@ -13,7 +14,10 @@ class TemplateMinerTest(unittest.TestCase):
 
     def test_load_config(self):
         config = TemplateMinerConfig()
-        config.load("drain3_test.ini")
+        if os.path.exists("drain3_test.ini"):
+            config.load("drain3_test.ini")
+        if os.path.exists("tests/drain3_test.ini"):
+            config.load("tests/drain3_test.ini")
         self.assertEqual(1024, config.drain_max_clusters)
         self.assertListEqual(["_"], config.drain_extra_delimiters)
         self.assertEqual(7, len(config.masking_instructions))
