@@ -4,9 +4,11 @@ Author      : LogPAI team
 Modified by : david.ohana@ibm.com, moshikh@il.ibm.com
 License     : MIT
 """
-from cachetools import LRUCache, Cache
-from drain3.simple_profiler import Profiler, NullProfiler
 from typing import List, Dict
+
+from cachetools import LRUCache, Cache
+
+from drain3.simple_profiler import Profiler, NullProfiler
 
 param_str = '<*>'
 
@@ -30,8 +32,8 @@ class Node:
     __slots__ = ["key_to_child_node", "cluster_ids"]
 
     def __init__(self):
-        self.key_to_child_node : Dict[str, Node] = {}
-        self.cluster_ids : List[int] = []
+        self.key_to_child_node: Dict[str, Node] = {}
+        self.cluster_ids: List[int] = []
 
 
 class Drain:
@@ -61,6 +63,8 @@ class Drain:
         self.profiler = profiler
         self.extra_delimiters = extra_delimiters
         self.max_clusters = max_clusters
+
+        # key: int, value: LogCluster
         self.id_to_cluster = {} if max_clusters is None else LRUCache(maxsize=max_clusters)
         self.clusters_counter = 0
 
@@ -233,21 +237,21 @@ class Drain:
 
         return ret_val
 
-    def print_tree(self):
-        self.print_node("root", self.root_node, 0)
+    def print_tree(self, file=None):
+        self.print_node("root", self.root_node, 0, file)
 
-    def print_node(self, token, node, depth):
-        out_str =  '\t' * depth
+    def print_node(self, token, node, depth, file):
+        out_str = '\t' * depth
 
         if depth < 2:
             out_str += '<' + str(token) + '>'
         else:
             out_str += token
 
-        print(out_str)
+        print(out_str, file=file)
 
         for token, child in node.key_to_child_node.items():
-            self.print_node(token, child, depth + 1)
+            self.print_node(token, child, depth + 1, file)
 
     def add_log_message(self, content: str):
         content = content.strip()
