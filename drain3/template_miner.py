@@ -27,6 +27,12 @@ class TemplateMiner:
     def __init__(self,
                  persistence_handler: PersistenceHandler = None,
                  config: TemplateMinerConfig = None):
+        """
+        Wrapper for Drain with persistence and masking support
+
+        :param persistence_handler: The type of persistence to use. When None, no persistence is applied.
+        :param config: Configuration object. When none, configuration is loaded from default .ini file (if exist)
+        """
         logger.info("Starting Drain3 template miner")
 
         if config is None:
