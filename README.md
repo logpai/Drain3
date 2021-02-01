@@ -109,7 +109,7 @@ IP is 12.12.12.12
 {"change_type": "cluster_created", "cluster_id": "A0013", "cluster_size": 1, "template_mined": "IP is <IP>", "cluster_count": 13}
 ```
 
-Note: template parameters that do not match custom masking are output as <*>
+Note: template parameters that do not match custom masking are output as `<*>`
 
 ## Persistence
 The persistence feature saves and loads a snapshot of Drain3 state in (compressed) json format. This feature adds restart resiliency
@@ -136,7 +136,7 @@ Snapshots are created in the following events:
 - `cluster_template_changed` - in any update of a template
 - `periodic` - after n minutes from the last snapshot. This is intended to save cluster sizes even if no new template was identified.  
 
-Drain3 currently supports 3 persistence modes:
+Drain3 currently supports the following persistence modes:
 
 - **Kafka** - The snapshot is saved in a dedicated topic used only for snapshots - the last message in this topic 
 is the last snapshot that will be loaded after restart.
@@ -147,6 +147,8 @@ to change Kafka endpoint (default is `localhost:9092`).
 - **Redis** - The snapshot is saved to a key in Redis database (contributed by @matabares).
 
 - **File** - The snapshot is saved to a file.
+
+- **Memory** - The snapshot is saved an in-memory object.
 
 - **None** - No persistence.
 
