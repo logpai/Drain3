@@ -201,6 +201,12 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 
 ## Change Log
 
+##### v0.9.2
+* Updated jsonpickle version
+* keys `id_to_cluster` dict are now persisted by jsonpickle 
+  as `int` instead of `str` to avoid keys type conversion on load snapshot
+  which caused some issues.
+
 ##### v0.9.1
 * Added option to configure `TemplateMiner` using a configuration object
   (without `.ini` file).

@@ -10,6 +10,7 @@ import time
 import zlib
 
 import jsonpickle
+from cachetools import LRUCache
 
 from drain3.drain import Drain
 from drain3.masking import LogMasker
@@ -72,12 +73,17 @@ class TemplateMiner:
         if self.config.snapshot_compress_state:
             state = zlib.decompress(base64.b64decode(state))
 
-        drain: Drain = jsonpickle.loads(state)
+        drain: Drain = jsonpickle.loads(state, keys=True)
 
-        # json-pickle encode keys as string by default, so we have to convert those back to int
-        keys = drain.id_to_cluster.keys()
-        for key in keys:
-            drain.id_to_cluster[int(key)] = drain.id_to_cluster.pop(key)
+        # json-pickle encoded keys as string by default, so we have to convert those back to int
+        # this is only relevant for backwards compatibility when loading a snapshot of drain <= v0.9.1
+        # which did not use json-pickle's keys=true
+        if len(drain.id_to_cluster) > 0 and isinstance(next(iter(drain.id_to_cluster.keys())), str):
+            drain.id_to_cluster = {int(k): v for k, v in list(drain.id_to_cluster.items())}
+            if self.config.drain_max_clusters:
+                cache = LRUCache(maxsize=self.config.drain_max_clusters)
+                cache.update(drain.id_to_cluster)
+                drain.id_to_cluster = cache
 
         drain.profiler = self.profiler
 
@@ -86,7 +92,7 @@ class TemplateMiner:
             len(drain.clusters), drain.get_total_cluster_size()))
 
     def save_state(self, snapshot_reason):
-        state = jsonpickle.dumps(self.drain).encode('utf-8')
+        state = jsonpickle.dumps(self.drain, keys=True).encode('utf-8')
         if self.config.snapshot_compress_state:
             state = base64.b64encode(zlib.compress(state))
 
