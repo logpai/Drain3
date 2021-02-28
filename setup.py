@@ -9,7 +9,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 setup(
     name='drain3',
     packages=['drain3'],
-    version="0.9.1",
+    version="0.9.2",
     license='MIT',
     description="Persistent & streaming log template miner",
     long_description=long_description,
@@ -20,7 +20,7 @@ setup(
     download_url='https://github.com/IBM/Drain3/archive/v_01.tar.gz',
     keywords=['drain', 'log', 'parser', 'IBM', 'template', 'logs', 'miner'],
     install_requires=[
-        'jsonpickle==1.4.1',
+        'jsonpickle==1.5.1',
     ],
     extras_require={
         "kafka": ['kafka-python==2.0.1'],
