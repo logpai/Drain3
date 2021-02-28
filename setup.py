@@ -20,7 +20,7 @@ setup(
     download_url='https://github.com/IBM/Drain3/archive/v_01.tar.gz',
     keywords=['drain', 'log', 'parser', 'IBM', 'template', 'logs', 'miner'],
     install_requires=[
-        'jsonpickle==1.5.1',
+        'jsonpickle==1.5.1', 'cachetools==4.2.1'
     ],
     extras_require={
         "kafka": ['kafka-python==2.0.1'],
