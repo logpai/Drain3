@@ -34,7 +34,7 @@ project by LogPAI from Python 2.7 to Python 3.6 or later with some bug-fixes and
 
 Read more information about Drain from the following paper:
 
-- Pinjia He, Jieming Zhu, Zibin Zheng, and Michael R. Lyu. [Drain: An Online Log Parsing Approach with Fixed Depth Tree](http://jmzhu.logpai.com/pub/pjhe_icws2017.pdf), Proceedings of the 24th International Conference on Web Services (ICWS), 2017.
+- Pinjia He, Jieming Zhu, Zibin Zheng, and Michael R. Lyu. [Drain: An Online Log Parsing Approach with Fixed Depth Tree](https://pinjiahe.github.io/papers/ICWS17.pdf), Proceedings of the 24th International Conference on Web Services (ICWS), 2017.
 
 A possible Drain3 use case in this blog post: [Use open source Drain3 log-template mining project to monitor for network outages](https://developer.ibm.com/blogs/how-mining-log-templates-can-help-ai-ops-in-cloud-scale-data-centers).
 
