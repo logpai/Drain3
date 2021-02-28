@@ -1,0 +1,27 @@
+name: Python 3.6
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@v2
+
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.6"
+
+    - name: Setup Pipenv
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade pipenv
+
+    - name: Install dependencies
+      run:  pipenv sync
+
+    - name: Test with unittest
+      run: pipenv run python -m unittest discover --verbose --start-directory tests

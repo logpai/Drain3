@@ -1,4 +1,4 @@
-name: Python package
+name: Python 3.6
 
 on: [push, pull_request]
 
@@ -13,7 +13,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v2
       with:
-        python-version: "3.6"
+        python-version: "3.8"
 
     - name: Setup Pipenv
       run: |
