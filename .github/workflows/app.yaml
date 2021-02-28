@@ -21,7 +21,7 @@ jobs:
         python -m pip install --upgrade pipenv
 
     - name: Install dependencies
-      run:  pipenv install --deploy --dev
+      run:  pipenv sync
 
     - name: Test with unittest
       run: pipenv run python -m unittest discover --verbose --start-directory tests
