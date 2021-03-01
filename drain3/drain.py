@@ -25,7 +25,7 @@ class LogCluster:
         return ' '.join(self.log_template_tokens)
 
     def __str__(self):
-        return f"{self.cluster_id} (size {self.size}): {self.get_template()}"
+        return f"ID={str(self.cluster_id).ljust(5)} : size={str(self.size).ljust()}: {self.get_template()}"
 
 
 class Node:
@@ -114,12 +114,12 @@ class Drain:
         return cluster
 
     def add_seq_to_prefix_tree(self, root_node, cluster: LogCluster):
-        token_count = str(len(cluster.log_template_tokens))
-        if token_count not in root_node.key_to_child_node:
+        token_count_str = str(len(cluster.log_template_tokens))
+        if token_count_str not in root_node.key_to_child_node:
             first_layer_node = Node()
-            root_node.key_to_child_node[token_count] = first_layer_node
+            root_node.key_to_child_node[token_count_str] = first_layer_node
         else:
-            first_layer_node = root_node.key_to_child_node[token_count]
+            first_layer_node = root_node.key_to_child_node[token_count_str]
 
         parent_node = first_layer_node
 
@@ -131,11 +131,9 @@ class Drain:
         current_depth = 1
         for token in cluster.log_template_tokens:
 
-            # Add current log cluster to the leaf node
-            at_max_depth = current_depth == self.depth
-            is_last_token = current_depth == token_count
-            if at_max_depth or is_last_token:
-                # Clean up stale clusters before adding a new one.
+            # if at max depth or this is last token in template - add current log cluster to the leaf node
+            if current_depth == self.depth or str(current_depth) == token_count_str:
+                # clean up stale clusters before adding a new one.
                 new_cluster_ids = [cluster.cluster_id]
                 for cluster_id in parent_node.cluster_ids:
                     if cluster_id in self.id_to_cluster:
@@ -143,7 +141,7 @@ class Drain:
                 parent_node.cluster_ids = new_cluster_ids
                 break
 
-            # If token not matched in this layer of existing tree.
+            # if token not matched in this layer of existing tree.
             if token not in parent_node.key_to_child_node:
                 if not self.has_numbers(token):
                     if param_str in parent_node.key_to_child_node:
@@ -173,7 +171,7 @@ class Drain:
                     else:
                         parent_node = parent_node.key_to_child_node[param_str]
 
-            # If the token is matched
+            # if the token is matched
             else:
                 parent_node = parent_node.key_to_child_node[token]
 
