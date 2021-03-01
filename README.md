@@ -201,6 +201,10 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 
 ## Change Log
 
+##### v0.9.3
+* Fixed: comparison of type int with type str in function `add_seq_to_prefix_tree` #28
+  (bug introduced at v0.9.1)
+
 ##### v0.9.2
 * Updated jsonpickle version
 * Keys `id_to_cluster` dict are now persisted by jsonpickle 

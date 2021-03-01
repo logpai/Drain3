@@ -25,7 +25,7 @@ class LogCluster:
         return ' '.join(self.log_template_tokens)
 
     def __str__(self):
-        return f"ID={str(self.cluster_id).ljust(5)} : size={str(self.size).ljust()}: {self.get_template()}"
+        return f"ID={str(self.cluster_id).ljust(5)} : size={str(self.size).ljust(10)}: {self.get_template()}"
 
 
 class Node:
