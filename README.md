@@ -201,6 +201,14 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 
 ## Change Log
 
+##### v0.9.4
+* Added: `TemplateMiner.get_parameter_list()` function to extract 
+  template parameters for raw log message (thanks to *@cwyalpha*)
+* Added option to customize mask wrapper - Instead of the default 
+  `<*>`, `<NUM>` etc, you can select any wrapper prefix or 
+  suffix by overriding 
+  `TemplateMinerConfig.mask_prefix` and `TemplateMinerConfig.mask_prefix`
+
 ##### v0.9.3
 * Fixed: comparison of type int with type str in function `add_seq_to_prefix_tree` #28
   (bug introduced at v0.9.1)
