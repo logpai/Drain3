@@ -220,7 +220,8 @@ prints result clusters, prefix tree and performance statistics.
 
 #### Sample config file
 
-An example `drain3.ini` file with masking instructions can be found in the `examples` folder as well.
+An example `drain3.ini` file with masking instructions can be 
+found in the [examples](examples) folder as well.
 
 ## Contributing 
 
