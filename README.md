@@ -208,6 +208,8 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
   `<*>`, `<NUM>` etc, you can select any wrapper prefix or 
   suffix by overriding 
   `TemplateMinerConfig.mask_prefix` and `TemplateMinerConfig.mask_prefix`
+* Fixed: config `.ini` file is always read from same folder as 
+  source file in demos in tests (thanks *@RobinMaas95*)
 
 ##### v0.9.3
 * Fixed: comparison of type int with type str in function `add_seq_to_prefix_tree` #28
