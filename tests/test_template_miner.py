@@ -65,8 +65,8 @@ class TemplateMinerTest(unittest.TestCase):
         config = TemplateMinerConfig()
         mi = MaskingInstruction("((?<=[^A-Za-z0-9])|^)([\\-\\+]?\\d+)((?=[^A-Za-z0-9])|$)", "NUM")
         config.masking_instructions.append(mi)
-        config.mask_prefix = "[["
-        config.mask_suffix = "]]"
+        config.mask_prefix = "[:"
+        config.mask_suffix = ":]"
         template_miner = TemplateMiner(None, config)
 
         def add_and_test(msg, expected_params):
@@ -82,6 +82,6 @@ class TemplateMinerTest(unittest.TestCase):
         add_and_test("hello BCD", ["BCD"])
         add_and_test("request took 123 ms", ["123"])
         add_and_test("file saved [test.xml]", [])
-        add_and_test("new order received: [[xyz]]", [])
+        add_and_test("new order received: [:xyz:]", [])
         add_and_test("order type: new, order priority:3", ["3"])
         add_and_test("order type: changed, order priority:5", ["changed,", "5"])

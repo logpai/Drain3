@@ -8,9 +8,9 @@ import base64
 import logging
 import re
 import time
-import zlib
 
 import jsonpickle
+import zlib
 from cachetools import LRUCache
 
 from drain3.drain import Drain
@@ -150,7 +150,7 @@ class TemplateMiner:
         template_regex = re.sub(escaped_prefix + r".+?" + escaped_suffix, self.drain.param_str, log_template)
         if self.drain.param_str not in template_regex:
             return []
-        template_regex = re.sub(r'([^A-Za-z0-9])', r'\\\1', template_regex)
+        template_regex = re.escape(template_regex)
         template_regex = re.sub(r'\\ +', r'\\s+', template_regex)
         template_regex = "^" + template_regex.replace(escaped_prefix + r"\*" + escaped_suffix, "(.*?)") + "$"
 

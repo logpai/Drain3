@@ -49,7 +49,8 @@ while True:
     result = template_miner.add_log_message(log_line)
     result_json = json.dumps(result)
     print(result_json)
-    print("parameters: " + str(template_miner.get_parameter_list(result["template_mined"], log_line)))
+    params = template_miner.get_parameter_list(result["template_mined"], log_line)
+    print("parameters: " + str(params))
 
 print("Clusters:")
 for cluster in template_miner.drain.clusters:
