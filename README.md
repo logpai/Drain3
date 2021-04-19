@@ -190,7 +190,7 @@ executing the following command (assuming pipenv already installed):
 python3 -m pipenv sync
 ```
 
-### Example 1 - `drain_stdin_demo`
+#### Example 1 - `drain_stdin_demo`
 
 Run [examples/drain_stdin_demo.py](examples/drain_stdin_demo.py) from 
 the root folder of the repository by: 
@@ -206,7 +206,7 @@ Enter several log lines using the command line. Press `q` to end execution.
 
 Change `persistence_type` variable in the example to change persistence mode.
 
-### Example 2 - `drain_bigfile_demo`
+#### Example 2 - `drain_bigfile_demo`
 
 Run [examples/drain_bigfile_demo](examples/drain_bigfile_demo.py) from 
 the root folder of the repository by: 
@@ -218,7 +218,7 @@ python3 -m pipenv run python -m examples.drain_bigfile_demo
 This example downloads a real-world log file and process all lines, then
 prints result clusters, prefix tree and performance statistics.
 
-### Sample `.ini` file
+#### Sample config file
 
 An example `drain3.ini` file with masking instructions can be found in the `examples` folder as well.
 
