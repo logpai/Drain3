@@ -10,8 +10,10 @@ import os
 import subprocess
 import sys
 import time
+from os.path import dirname
 
 from drain3 import TemplateMiner
+from drain3.template_miner_config import TemplateMinerConfig
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
@@ -26,7 +28,10 @@ if not os.path.isfile(in_log_file):
     p = subprocess.Popen(f"tar -xvzf {in_gz_file}", shell=True)
     p.wait()
 
-template_miner = TemplateMiner()
+
+config = TemplateMinerConfig()
+config.load(dirname(__file__) + "/drain3.ini")
+template_miner = TemplateMiner(config=config)
 
 line_count = 0
 start_time = time.time()

@@ -7,8 +7,10 @@ License     : MIT
 import json
 import logging
 import sys
+from os.path import dirname
 
 from drain3 import TemplateMiner
+from drain3.template_miner_config import TemplateMinerConfig
 
 # persistence_type = "NONE"
 # persistence_type = "REDIS"
@@ -40,7 +42,10 @@ elif persistence_type == "REDIS":
 else:
     persistence = None
 
-template_miner = TemplateMiner(persistence)
+config = TemplateMinerConfig()
+config.load(dirname(__file__) + "/drain3.ini")
+
+template_miner = TemplateMiner(persistence, config)
 print(f"Drain3 started with '{persistence_type}' persistence, reading from std-in (input 'q' to finish)")
 while True:
     log_line = input()
