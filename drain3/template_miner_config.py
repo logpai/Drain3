@@ -20,6 +20,8 @@ class TemplateMinerConfig:
         self.drain_max_children = 100
         self.drain_max_clusters = None
         self.masking_instructions = []
+        self.mask_prefix = "<"
+        self.mask_suffix = ">"
 
     def load(self, config_filename: str):
         parser = configparser.ConfigParser()
@@ -57,6 +59,9 @@ class TemplateMinerConfig:
 
         masking_instructions_str = parser.get(section_masking, 'masking',
                                               fallback=str(self.masking_instructions))
+        self.mask_prefix = parser.get(section_masking, 'mask_prefix', fallback=self.mask_prefix)
+        self.mask_suffix = parser.get(section_masking, 'mask_suffix', fallback=self.mask_suffix)
+
         masking_instructions = []
         masking_list = json.loads(masking_instructions_str)
         for mi in masking_list:

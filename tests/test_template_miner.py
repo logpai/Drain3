@@ -5,6 +5,7 @@ import sys
 import unittest
 
 from drain3 import TemplateMiner
+from drain3.masking import MaskingInstruction
 from drain3.memory_buffer_persistence import MemoryBufferPersistence
 from drain3.template_miner_config import TemplateMinerConfig
 
@@ -59,3 +60,28 @@ class TemplateMinerTest(unittest.TestCase):
 
         print(template_miner2.add_log_message("hello yyy"))
         print(template_miner2.add_log_message("goodbye ABC"))
+
+    def test_get_param_list(self):
+        config = TemplateMinerConfig()
+        mi = MaskingInstruction("((?<=[^A-Za-z0-9])|^)([\\-\\+]?\\d+)((?=[^A-Za-z0-9])|$)", "NUM")
+        config.masking_instructions.append(mi)
+        config.mask_prefix = "[["
+        config.mask_suffix = "]]"
+        template_miner = TemplateMiner(None, config)
+
+        def add_and_test(msg, expected_params):
+            print(f"msg: {msg}")
+            res = template_miner.add_log_message(msg)
+            print(f"result: {res}")
+            params = template_miner.get_parameter_list(res["template_mined"], msg)
+            print(f"params: {params}")
+            self.assertListEqual(params, expected_params)
+
+        add_and_test("hello", [])
+        add_and_test("hello ABC", [])
+        add_and_test("hello BCD", ["BCD"])
+        add_and_test("request took 123 ms", ["123"])
+        add_and_test("file saved [test.xml]", [])
+        add_and_test("new order received: [[xyz]]", [])
+        add_and_test("order type: new, order priority:3", ["3"])
+        add_and_test("order type: changed, order priority:5", ["changed,", "5"])

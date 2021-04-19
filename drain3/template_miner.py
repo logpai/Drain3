@@ -6,6 +6,7 @@ License     : MIT
 """
 import base64
 import logging
+import re
 import time
 import zlib
 
@@ -49,15 +50,17 @@ class TemplateMiner:
 
         self.persistence_handler = persistence_handler
 
+        param_str = self.config.mask_prefix + "*" + self.config.mask_suffix
         self.drain = Drain(
             sim_th=self.config.drain_sim_th,
             depth=self.config.drain_depth,
             max_children=self.config.drain_max_children,
             max_clusters=self.config.drain_max_clusters,
             extra_delimiters=self.config.drain_extra_delimiters,
-            profiler=self.profiler
+            profiler=self.profiler,
+            param_str=param_str
         )
-        self.masker = LogMasker(self.config.masking_instructions)
+        self.masker = LogMasker(self.config.masking_instructions, self.config.mask_prefix, self.config.mask_suffix)
         self.last_save_time = time.time()
         if persistence_handler is not None:
             self.load_state()
@@ -140,3 +143,25 @@ class TemplateMiner:
         self.profiler.end_section("total")
         self.profiler.report(self.config.profiling_report_sec)
         return result
+
+    def get_parameter_list(self, log_template: str, content: str):
+        escaped_prefix = re.escape(self.config.mask_prefix)
+        escaped_suffix = re.escape(self.config.mask_suffix)
+        template_regex = re.sub(escaped_prefix + r".+?" + escaped_suffix, self.drain.param_str, log_template)
+        if self.drain.param_str not in template_regex:
+            return []
+        template_regex = re.sub(r'([^A-Za-z0-9])', r'\\\1', template_regex)
+        template_regex = re.sub(r'\\ +', r'\\s+', template_regex)
+        template_regex = "^" + template_regex.replace(escaped_prefix + r"\*" + escaped_suffix, "(.*?)") + "$"
+
+        for delimiter in self.config.drain_extra_delimiters:
+            content = re.sub(delimiter, ' ', content)
+        parameter_list = re.findall(template_regex, content)
+        parameter_list = parameter_list[0] if parameter_list else ()
+        parameter_list = list(parameter_list) if isinstance(parameter_list, tuple) else [parameter_list]
+
+        def is_mask(p: str):
+            return p.startswith(self.config.mask_prefix) and p.endswith(self.config.mask_suffix)
+
+        parameter_list = [p for p in list(parameter_list) if not is_mask(p)]
+        return parameter_list

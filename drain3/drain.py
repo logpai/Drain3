@@ -10,8 +10,6 @@ from cachetools import LRUCache, Cache
 
 from drain3.simple_profiler import Profiler, NullProfiler
 
-param_str = '<*>'
-
 
 class LogCluster:
     __slots__ = ["log_template_tokens", "cluster_id", "size"]
@@ -43,7 +41,8 @@ class Drain:
                  max_children=100,
                  max_clusters=None,
                  extra_delimiters=(),
-                 profiler: Profiler = NullProfiler()):
+                 profiler: Profiler = NullProfiler(),
+                 param_str="<*>"):
         """
         Attributes
         ----------
@@ -63,6 +62,7 @@ class Drain:
         self.profiler = profiler
         self.extra_delimiters = extra_delimiters
         self.max_clusters = max_clusters
+        self.param_str = param_str
 
         # key: int, value: LogCluster
         self.id_to_cluster = {} if max_clusters is None else LRUCache(maxsize=max_clusters)
@@ -104,7 +104,7 @@ class Drain:
             key_to_child_node = parent_node.key_to_child_node
             parent_node = key_to_child_node.get(token)
             if parent_node is None:
-                parent_node = key_to_child_node.get(param_str)
+                parent_node = key_to_child_node.get(self.param_str)
             if parent_node is None:
                 return None
 
@@ -144,13 +144,13 @@ class Drain:
             # if token not matched in this layer of existing tree.
             if token not in parent_node.key_to_child_node:
                 if not self.has_numbers(token):
-                    if param_str in parent_node.key_to_child_node:
+                    if self.param_str in parent_node.key_to_child_node:
                         if len(parent_node.key_to_child_node) < self.max_children:
                             new_node = Node()
                             parent_node.key_to_child_node[token] = new_node
                             parent_node = new_node
                         else:
-                            parent_node = parent_node.key_to_child_node[param_str]
+                            parent_node = parent_node.key_to_child_node[self.param_str]
                     else:
                         if len(parent_node.key_to_child_node) + 1 < self.max_children:
                             new_node = Node()
@@ -158,18 +158,18 @@ class Drain:
                             parent_node = new_node
                         elif len(parent_node.key_to_child_node) + 1 == self.max_children:
                             new_node = Node()
-                            parent_node.key_to_child_node[param_str] = new_node
+                            parent_node.key_to_child_node[self.param_str] = new_node
                             parent_node = new_node
                         else:
-                            parent_node = parent_node.key_to_child_node[param_str]
+                            parent_node = parent_node.key_to_child_node[self.param_str]
 
                 else:
-                    if param_str not in parent_node.key_to_child_node:
+                    if self.param_str not in parent_node.key_to_child_node:
                         new_node = Node()
-                        parent_node.key_to_child_node[param_str] = new_node
+                        parent_node.key_to_child_node[self.param_str] = new_node
                         parent_node = new_node
                     else:
-                        parent_node = parent_node.key_to_child_node[param_str]
+                        parent_node = parent_node.key_to_child_node[self.param_str]
 
             # if the token is matched
             else:
@@ -178,14 +178,13 @@ class Drain:
             current_depth += 1
 
     # seq1 is template
-    @staticmethod
-    def get_seq_distance(seq1, seq2):
+    def get_seq_distance(self, seq1, seq2):
         assert len(seq1) == len(seq2)
         sim_tokens = 0
         param_count = 0
 
         for token1, token2 in zip(seq1, seq2):
-            if token1 == param_str:
+            if token1 == self.param_str:
                 param_count += 1
                 continue
             if token1 == token2:
@@ -219,8 +218,7 @@ class Drain:
 
         return match_cluster
 
-    @staticmethod
-    def get_template(seq1, seq2):
+    def get_template(self, seq1, seq2):
         assert len(seq1) == len(seq2)
         ret_val = []
 
@@ -229,7 +227,7 @@ class Drain:
             if word == seq2[i]:
                 ret_val.append(word)
             else:
-                ret_val.append(param_str)
+                ret_val.append(self.param_str)
 
             i += 1
 

@@ -16,17 +16,18 @@ class MaskingInstruction:
         self.regex_pattern = regex_pattern
         self.mask_with = mask_with
         self.regex = re.compile(regex_pattern)
-        self.mask_with_wrapped = "<" + mask_with + ">"
 
 
 class RegexMasker:
-    def __init__(self, masking_instructions: List[MaskingInstruction]):
+    def __init__(self, masking_instructions: List[MaskingInstruction], mask_prefix: str, mask_suffix: str):
+        self.mask_prefix = mask_prefix
+        self.mask_suffix = mask_suffix
         self.masking_instructions = masking_instructions
 
     def mask(self, content: str):
         for mi in self.masking_instructions:
             # content = re.sub(mi.regex, mi.mask_with_wrapped, content)
-            content = mi.regex.sub(mi.mask_with_wrapped, content)
+            content = mi.regex.sub(self.mask_prefix + mi.mask_with + self.mask_suffix, content)
         return content
 
 
@@ -46,8 +47,8 @@ class RegexMasker:
 
 
 class LogMasker:
-    def __init__(self, masking_instructions: List[MaskingInstruction]):
-        self.masker = RegexMasker(masking_instructions)
+    def __init__(self, masking_instructions: List[MaskingInstruction], mask_prefix: str, mask_suffix: str):
+        self.masker = RegexMasker(masking_instructions, mask_prefix, mask_suffix)
 
     def mask(self, content: str):
         if self.masker is not None:
