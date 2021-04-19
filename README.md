@@ -174,6 +174,7 @@ explicitly, since it is declared as an extra (optional) dependency, by either:
 pip3 install kafka-python
 ```
 
+-- or --
 ```
 pip3 install redis
 ```
@@ -181,19 +182,45 @@ pip3 install redis
 
 ## Examples
 
-Run [examples/drain_stdin_demo.py](examples/drain_stdin_demo.py) from the root folder of the repository by: 
+In order to run the examples directly from the repository, 
+you need to install dependencies. You can do that using *pipenv* by
+executing the following command (assuming pipenv already installed):
+
+```shell
+python3 -m pipenv sync
+```
+
+### Example 1 - `drain_stdin_demo`
+
+Run [examples/drain_stdin_demo.py](examples/drain_stdin_demo.py) from 
+the root folder of the repository by: 
 
 ```
-python -m examples.drain_stdin_demo
+python3 -m pipenv run python -m examples.drain_stdin_demo
 ```
 
-Use Drain3 with input from stdin and persist to either Kafka / file / no persistence.
+This example uses Drain3 on input from stdin and persist to either 
+Kafka / file / no persistence.
 
 Enter several log lines using the command line. Press `q` to end execution.
 
 Change `persistence_type` variable in the example to change persistence mode.
 
-An example drain3.ini file with masking instructions exists in the `examples` folder.
+### Example 2 - `drain_bigfile_demo`
+
+Run [examples/drain_bigfile_demo](examples/drain_bigfile_demo.py) from 
+the root folder of the repository by: 
+
+```
+python3 -m pipenv run python -m examples.drain_bigfile_demo
+```
+
+This example downloads a real-world log file and process all lines, then
+prints result clusters, prefix tree and performance statistics.
+
+### Sample `.ini` file
+
+An example `drain3.ini` file with masking instructions can be found in the `examples` folder as well.
 
 ## Contributing 
 
