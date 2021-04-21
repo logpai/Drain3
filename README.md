@@ -126,8 +126,11 @@ parameters: ['cc']
 
 ## Configuration
 
-Drain3 is configured using [configparser](https://docs.python.org/3.4/library/configparser.html). Config filename
-is `drain3.ini` in working directory.
+Drain3 is configured using [configparser](https://docs.python.org/3.4/library/configparser.html). 
+By default, config filename is `drain3.ini` in working directory.
+
+Drain3 can also be configured passing a [TemplateMinerConfig](drain3/template_miner_config.py) object 
+to the [TemplateMiner](drain3/template_miner.py) constructor.
 
 Available parameters are:
 
