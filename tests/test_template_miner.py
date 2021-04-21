@@ -82,3 +82,36 @@ class TemplateMinerTest(unittest.TestCase):
         add_and_test("new order received: [:xyz:]", [])
         add_and_test("order type: new, order priority:3", ["3"])
         add_and_test("order type: changed, order priority:5", ["changed,", "5"])
+
+    def test_match_only(self):
+        config = TemplateMinerConfig()
+        mi = MaskingInstruction("((?<=[^A-Za-z0-9])|^)([\\-\\+]?\\d+)((?=[^A-Za-z0-9])|$)", "NUM")
+        config.masking_instructions.append(mi)
+        tm = TemplateMiner(None, config)
+
+        res = tm.add_log_message("aa aa aa")
+        print(res)
+
+        res = tm.add_log_message("aa aa bb")
+        print(res)
+
+        res = tm.add_log_message("xx yy zz")
+        print(res)
+
+        res = tm.add_log_message("rrr qqq 123")
+        print(res)
+
+        c = tm.match("aa aa tt")
+        self.assertEqual(1, c.cluster_id)
+
+        c = tm.match("xx yy zz")
+        self.assertEqual(2, c.cluster_id)
+
+        c = tm.match("xx yy rr")
+        self.assertIsNone(c)
+
+        c = tm.match("nothing")
+        self.assertIsNone(c)
+
+        c = tm.match("rrr qqq 456")
+        self.assertEqual(3, c.cluster_id)

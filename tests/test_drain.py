@@ -1,6 +1,6 @@
 import unittest
 
-from drain3.drain import Drain
+from drain3.drain import Drain, LogCluster
 
 
 class DrainTest(unittest.TestCase):
@@ -154,9 +154,28 @@ class DrainTest(unittest.TestCase):
         self.assertListEqual(list(map(str.strip, expected)), actual)
         self.assertEqual(5, model.get_total_cluster_size())
 
-    def test_one_token_message(self):
+    def test_match_only(self):
         model = Drain()
-        cluster, change_type = model.add_log_message("oneTokenMessage")
-        self.assertEqual("cluster_created", change_type, "1st check")
-        cluster, change_type = model.add_log_message("oneTokenMessage")
-        self.assertEqual("none", change_type, "2nd check")
+        res = model.add_log_message("aa aa aa")
+        print(res[0])
+
+        res = model.add_log_message("aa aa bb")
+        print(res[0])
+
+        res = model.add_log_message("aa aa cc")
+        print(res[0])
+
+        res = model.add_log_message("xx yy zz")
+        print(res[0])
+
+        c: LogCluster = model.match("aa aa tt")
+        self.assertEqual(1, c.cluster_id)
+
+        c: LogCluster = model.match("xx yy zz")
+        self.assertEqual(2, c.cluster_id)
+
+        c: LogCluster = model.match("xx yy rr")
+        self.assertIsNone(c)
+
+        c: LogCluster = model.match("nothing")
+        self.assertIsNone(c)

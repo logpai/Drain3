@@ -76,7 +76,7 @@ class Drain:
     def has_numbers(s):
         return any(char.isdigit() for char in s)
 
-    def tree_search(self, root_node: Node, tokens):
+    def tree_search(self, root_node: Node, tokens: list, sim_th: float, include_params: bool):
 
         # at first level, children are grouped by token (word) count
         token_count = len(tokens)
@@ -110,7 +110,7 @@ class Drain:
 
             current_depth += 1
 
-        cluster = self.fast_match(parent_node.cluster_ids, tokens)
+        cluster = self.fast_match(parent_node.cluster_ids, tokens, sim_th, include_params)
         return cluster
 
     def add_seq_to_prefix_tree(self, root_node, cluster: LogCluster):
@@ -178,7 +178,7 @@ class Drain:
             current_depth += 1
 
     # seq1 is template
-    def get_seq_distance(self, seq1, seq2):
+    def get_seq_distance(self, seq1, seq2, include_params: bool):
         assert len(seq1) == len(seq2)
         sim_tokens = 0
         param_count = 0
@@ -190,11 +190,14 @@ class Drain:
             if token1 == token2:
                 sim_tokens += 1
 
+        if include_params:
+            sim_tokens += param_count
+
         ret_val = float(sim_tokens) / len(seq1)
 
         return ret_val, param_count
 
-    def fast_match(self, cluster_ids: list, tokens):
+    def fast_match(self, cluster_ids: list, tokens: list, sim_th: float, include_params: bool):
         match_cluster = None
 
         max_sim = -1
@@ -207,13 +210,13 @@ class Drain:
             cluster = Cache.get(self.id_to_cluster, cluster_id)
             if cluster is None:
                 continue
-            cur_sim, param_count = self.get_seq_distance(cluster.log_template_tokens, tokens)
+            cur_sim, param_count = self.get_seq_distance(cluster.log_template_tokens, tokens, include_params)
             if cur_sim > max_sim or (cur_sim == max_sim and param_count > max_param_count):
                 max_sim = cur_sim
                 max_param_count = param_count
                 max_cluster = cluster
 
-        if max_sim >= self.sim_th:
+        if max_sim >= sim_th:
             match_cluster = max_cluster
 
         return match_cluster
@@ -249,16 +252,19 @@ class Drain:
         for token, child in node.key_to_child_node.items():
             self.print_node(token, child, depth + 1, file)
 
-    def add_log_message(self, content: str):
+    def get_content_as_tokens(self, content):
         content = content.strip()
         for delimiter in self.extra_delimiters:
             content = content.replace(delimiter, " ")
-
         content_tokens = content.split()
+        return content_tokens
+
+    def add_log_message(self, content: str):
+        content_tokens = self.get_content_as_tokens(content)
 
         if self.profiler:
             self.profiler.start_section("tree_search")
-        match_cluster = self.tree_search(self.root_node, content_tokens)
+        match_cluster = self.tree_search(self.root_node, content_tokens, self.sim_th, False)
         if self.profiler:
             self.profiler.end_section()
 
@@ -291,6 +297,17 @@ class Drain:
             self.profiler.end_section()
 
         return match_cluster, update_type
+
+    def match(self, content: str):
+        """
+        Match against an already existing cluster. Match shall be perfect (sim_th=1.0).
+        New cluster will not be created as a result of this call, nor any cluster modifications.
+        :param content: log message to match
+        :return: Matched cluster or None of no match found.
+        """
+        content_tokens = self.get_content_as_tokens(content)
+        match_cluster = self.tree_search(self.root_node, content_tokens, 1.0, True)
+        return match_cluster
 
     def get_total_cluster_size(self):
         size = 0

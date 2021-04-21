@@ -13,7 +13,7 @@ import jsonpickle
 import zlib
 from cachetools import LRUCache
 
-from drain3.drain import Drain
+from drain3.drain import Drain, LogCluster
 from drain3.masking import LogMasker
 from drain3.persistence_handler import PersistenceHandler
 from drain3.simple_profiler import SimpleProfiler, NullProfiler, Profiler
@@ -114,7 +114,7 @@ class TemplateMiner:
 
         return None
 
-    def add_log_message(self, log_message: str):
+    def add_log_message(self, log_message: str) -> dict:
         self.profiler.start_section("total")
 
         self.profiler.start_section("mask")
@@ -143,6 +143,18 @@ class TemplateMiner:
         self.profiler.end_section("total")
         self.profiler.report(self.config.profiling_report_sec)
         return result
+
+    def match(self, log_message: str) -> LogCluster:
+
+        """
+          Match against an already existing cluster. Match shall be perfect (sim_th=1.0).
+          New cluster will not be created as a result of this call, nor any cluster modifications.
+          :param log_message: log message to match
+          :return: Matched cluster or None of no match found.
+        """
+        masked_content = self.masker.mask(log_message)
+        matched_cluster = self.drain.match(masked_content)
+        return matched_cluster
 
     def get_parameter_list(self, log_template: str, content: str):
         escaped_prefix = re.escape(self.config.mask_prefix)
