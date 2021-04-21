@@ -46,9 +46,10 @@ config = TemplateMinerConfig()
 config.load(dirname(__file__) + "/drain3.ini")
 
 template_miner = TemplateMiner(persistence, config)
-print(f"Drain3 started with '{persistence_type}' persistence, reading from std-in (input 'q' to finish)")
+print(f"Drain3 started with '{persistence_type}' persistence")
+print(f"reading from std-in (input 'q' to finish)")
 while True:
-    log_line = input()
+    log_line = input("> ")
     if log_line == 'q':
         break
     result = template_miner.add_log_message(log_line)
