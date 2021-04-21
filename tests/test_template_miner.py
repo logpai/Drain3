@@ -85,6 +85,7 @@ class TemplateMinerTest(unittest.TestCase):
 
     def test_match_only(self):
         config = TemplateMinerConfig()
+        config.drain_extra_delimiters = ["_"]
         mi = MaskingInstruction("((?<=[^A-Za-z0-9])|^)([\\-\\+]?\\d+)((?=[^A-Za-z0-9])|$)", "NUM")
         config.masking_instructions.append(mi)
         tm = TemplateMiner(None, config)
@@ -101,10 +102,10 @@ class TemplateMinerTest(unittest.TestCase):
         res = tm.add_log_message("rrr qqq 123")
         print(res)
 
-        c = tm.match("aa aa tt")
+        c = tm.match("aa   aa tt")
         self.assertEqual(1, c.cluster_id)
 
-        c = tm.match("xx yy zz")
+        c = tm.match("xx yy   zz")
         self.assertEqual(2, c.cluster_id)
 
         c = tm.match("xx yy rr")
@@ -113,5 +114,8 @@ class TemplateMinerTest(unittest.TestCase):
         c = tm.match("nothing")
         self.assertIsNone(c)
 
-        c = tm.match("rrr qqq 456")
+        c = tm.match("rrr qqq   456   ")
+        self.assertEqual(3, c.cluster_id)
+
+        c = tm.match("rrr_qqq_555")
         self.assertEqual(3, c.cluster_id)
