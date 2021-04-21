@@ -105,6 +105,9 @@ class TemplateMinerTest(unittest.TestCase):
         c = tm.match("aa   aa tt")
         self.assertEqual(1, c.cluster_id)
 
+        c = tm.match("aa aa 12")
+        self.assertEqual(1, c.cluster_id)
+
         c = tm.match("xx yy   zz")
         self.assertEqual(2, c.cluster_id)
 
@@ -117,5 +120,8 @@ class TemplateMinerTest(unittest.TestCase):
         c = tm.match("rrr qqq   456   ")
         self.assertEqual(3, c.cluster_id)
 
-        c = tm.match("rrr_qqq_555")
-        self.assertEqual(3, c.cluster_id)
+        c = tm.match("rrr qqq 555.2")
+        self.assertIsNone(c)
+
+        c = tm.match("rrr qqq num")
+        self.assertIsNone(c)
