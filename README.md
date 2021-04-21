@@ -31,6 +31,7 @@ ID=3     : size=2         : user <:*:> logged in
 ```
 
 Full sample program output:
+
 ```
 Starting Drain3 template miner
 Checking for saved state
@@ -103,7 +104,7 @@ The output is a dictionary with the following fields:
 
 - `change_type` - indicates either if a new template was identified, an existing template was changed or message added
   to an existing cluster.
-- `cluster_id` - Sequential ID of the cluster that the log belongs to, for example, `A0008`
+- `cluster_id` - Sequential ID of the cluster that the log belongs to.
 - `cluster_size`- The size (message count) of the cluster that the log belongs to
 - `cluster_count` - Count clusters seen so far
 - `template_mined`- the last template of above cluster_id
@@ -126,11 +127,11 @@ parameters: ['cc']
 
 ## Configuration
 
-Drain3 is configured using [configparser](https://docs.python.org/3.4/library/configparser.html). 
-By default, config filename is `drain3.ini` in working directory.
+Drain3 is configured using [configparser](https://docs.python.org/3.4/library/configparser.html). By default, config
+filename is `drain3.ini` in working directory.
 
-Drain3 can also be configured passing a [TemplateMinerConfig](drain3/template_miner_config.py) object 
-to the [TemplateMiner](drain3/template_miner.py) constructor.
+Drain3 can also be configured passing a [TemplateMinerConfig](drain3/template_miner_config.py) object to
+the [TemplateMiner](drain3/template_miner.py) constructor.
 
 Available parameters are:
 
@@ -142,6 +143,8 @@ Available parameters are:
 - `[DRAIN]/extra_delimiters` - delimiters to apply when splitting log message into words (in addition to whitespace) (
   default none). Format is a Python list e.g. `['_', ':']`.
 - `[MASKING]/masking` - parameters masking - in json format (default "")
+- `[MASKING]/mask_prefix` & `[MASKING]/mask_suffix` - the wrapping of identified parameters in templates. By default, it
+  is `<` and `>` respectively.
 - `[SNAPSHOT]/snapshot_interval_minutes` - time interval for new snapshots (default 1)
 - `[SNAPSHOT]/compress_state` - whether to compress the state before saving it. This can be useful when using Kafka
   persistence.
@@ -149,8 +152,7 @@ Available parameters are:
 ## Masking
 
 This feature allows masking of specific parameters in log message to specific keywords. Use a list of regular
-expression  
-dictionaries in the configuration file with the format {'regex_pattern', 'mask_with'} to set custom masking.
+expressions in the configuration file with the format `{'regex_pattern', 'mask_with'}` to set custom masking.
 
 In order to mask an IP address created the file `drain3.ini` :
 
@@ -161,14 +163,14 @@ masking = [
     ]
 ```
 
-Now, Drain3 recognizes IP addresses in templates, for example with input such as:
+Now, Drain3 will recognize IP addresses in templates, for example with input such as:
 
 ```
 IP is 12.12.12.12
-{"change_type": "cluster_created", "cluster_id": "A0013", "cluster_size": 1, "template_mined": "IP is <IP>", "cluster_count": 13}
+{"change_type": "cluster_created", "cluster_id": 13, "cluster_size": 1, "template_mined": "IP is <IP>", "cluster_count": 13}
 ```
 
-Note: template parameters that do not match custom masking are output as `<*>`
+Note: template parameters that do not match any custom mask in the preliminary masking phase are replaced with `<*>`.
 
 ## Persistence
 
@@ -182,12 +184,12 @@ The snapshot also persist number of occurrences per cluster, and the cluster_id.
 An example of a snapshot:
 
 ```
-{"clusters": [{"cluster_id": "A0001", "log_template_tokens": `["aa", "aa", "<\*>"]`, "py/object": "drain3_core.LogCluster", "size": 2}, {"cluster_id": "A0002", "log_template_tokens": `["My", "IP", "is", "<IP>"]`, "py/object": "drain3_core.LogCluster", "size": 1}]...
+{"clusters": [{"cluster_id": 1, "log_template_tokens": `["aa", "aa", "<\*>"]`, "py/object": "drain3_core.LogCluster", "size": 2}, {"cluster_id": 2, "log_template_tokens": `["My", "IP", "is", "<IP>"]`, "py/object": "drain3_core.LogCluster", "size": 1}]...
 ```
 
 This example snapshot persist two clusters with the templates:
 
-> `["aa", "aa", "<\*>"]` - occurs twice
+> `["aa", "aa", "<*>"]` - occurs twice
 >
 >  `["My", "IP", "is", "<IP>"]` - occurs once
 
