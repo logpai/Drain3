@@ -93,6 +93,9 @@ post: [Use open source Drain3 log-template mining project to monitor for network
 - **Packaging**. As a pip package.
 - **Memory efficiency**. Decrease the memory footprint of internal data structures and introduce cache to control max
   memory consumed (thanks to @StanislawSwierc)
+- **Fast Match Only**. In case you want to separate training and inference phase, Drain3 provides a function for *fast*
+  matching against already-learned clusters (templates)
+  only, without the usage of regular expressions.
 
 #### Expected Input and Output
 
@@ -290,6 +293,10 @@ An example `drain3.ini` file with masking instructions can be found in the [exam
 Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for further details.
 
 ## Change Log
+
+##### v0.9.5
+
+* Added: `TemplateMiner.match()` function for fast matching against existing clusters only.
 
 ##### v0.9.4
 
