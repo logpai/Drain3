@@ -230,18 +230,13 @@ class Drain:
 
         return match_cluster
 
-    def get_template(self, seq1, seq2):
+    def create_template(self, seq1, seq2):
         assert len(seq1) == len(seq2)
-        ret_val = []
+        ret_val = list(seq2)
 
-        i = 0
-        for word in seq1:
-            if word == seq2[i]:
-                ret_val.append(word)
-            else:
-                ret_val.append(self.param_str)
-
-            i += 1
+        for i, (token1, token2) in enumerate(zip(seq1, seq2)):
+            if token1 != token2:
+                ret_val[i] = self.param_str
 
         return ret_val
 
@@ -292,12 +287,12 @@ class Drain:
         else:
             if self.profiler:
                 self.profiler.start_section("cluster_exist")
-            new_template_tokens = self.get_template(content_tokens, match_cluster.log_template_tokens)
-            if ' '.join(new_template_tokens) != ' '.join(match_cluster.log_template_tokens):
+            new_template_tokens = self.create_template(content_tokens, match_cluster.log_template_tokens)
+            if tuple(new_template_tokens) == match_cluster.log_template_tokens:
+                update_type = "none"
+            else:
                 match_cluster.log_template_tokens = tuple(new_template_tokens)
                 update_type = "cluster_template_changed"
-            else:
-                update_type = "none"
             match_cluster.size += 1
             # Touch cluster to update its state in the cache.
             self.id_to_cluster.get(match_cluster.cluster_id)
