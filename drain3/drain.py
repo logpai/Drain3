@@ -110,6 +110,7 @@ class Drain:
 
             current_depth += 1
 
+        # get best match among all clusters with same prefix, or None if no match is above sim_th
         cluster = self.fast_match(parent_node.cluster_ids, tokens, sim_th, include_params)
         return cluster
 
@@ -198,6 +199,14 @@ class Drain:
         return ret_val, param_count
 
     def fast_match(self, cluster_ids: list, tokens: list, sim_th: float, include_params: bool):
+        """
+        Find the best match for a log message (represented as tokens) versus a list of clusters
+        :param cluster_ids: List of clusters to match against (represented by their IDs)
+        :param tokens: the log message, separated to tokens.
+        :param sim_th: minimum required similarity threshold (None will be returned in no clusters reached it)
+        :param include_params: consider tokens matched to wildcard parameters in similarity treshold.
+        :return: Best match cluster or None
+        """
         match_cluster = None
 
         max_sim = -1
