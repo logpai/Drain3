@@ -294,6 +294,10 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 
 ## Change Log
 
+##### v0.9.6 (WIP)
+
+* Speed optimization in case cluster already exist
+
 ##### v0.9.5
 
 * Added: `TemplateMiner.match()` function for fast matching against existing clusters only.
