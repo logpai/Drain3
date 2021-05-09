@@ -222,6 +222,20 @@ Drain3 currently supports the following persistence modes:
 Drain3 persistence modes can be easily extended to another medium / database by inheriting
 the [PersistenceHandler](drain3/persistence_handler.py) class.
 
+## Training/Inference modes
+
+In some use-cases, it is required to separate training and inference phases.
+
+In training phase you should call `template_miner.add_log_message(log_line)`. 
+This will match log line against an existing cluster (if similarity is above threshold) or 
+create a new cluster. It may also change the template of an existing cluster.
+
+In inference mode you should call `template_miner.match(log_line)`. This will match log line
+against previously learned clusters only. No new clusters are created and templates of existing
+clusters are not changed. Match to existing cluster has to be perfect, 
+otherwise `None` is returned. You can use persistence option to 
+load previously trained clusters before inference.
+
 ## Memory efficiency
 
 This feature limits the max memory used by the model. It is particularly important for large and possibly unbounded log
