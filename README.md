@@ -269,9 +269,12 @@ python3 -m pipenv run python -m examples.drain_stdin_demo
 
 This example uses Drain3 on input from stdin and persist to either Kafka / file / no persistence.
 
-Enter several log lines using the command line. Press `q` to end execution.
-
 Change `persistence_type` variable in the example to change persistence mode.
+
+Enter several log lines using the command line. Press `q` to end online learn-and-match mode.
+
+Next, demo goes to match (inference) only mode, in which no new clusters are trained 
+and input is matched against previously trained clusters only. Press `q` again to finish execution.
 
 #### Example 2 - `drain_bigfile_demo`
 
