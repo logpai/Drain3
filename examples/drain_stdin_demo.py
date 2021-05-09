@@ -44,10 +44,11 @@ else:
 
 config = TemplateMinerConfig()
 config.load(dirname(__file__) + "/drain3.ini")
+config.profiling_enabled = False
 
 template_miner = TemplateMiner(persistence, config)
 print(f"Drain3 started with '{persistence_type}' persistence")
-print(f"reading from std-in (input 'q' to finish)")
+print(f"Reading from std-in (input 'q' to finish)")
 while True:
     log_line = input("> ")
     if log_line == 'q':
@@ -55,9 +56,23 @@ while True:
     result = template_miner.add_log_message(log_line)
     result_json = json.dumps(result)
     print(result_json)
-    params = template_miner.get_parameter_list(result["template_mined"], log_line)
-    print("parameters: " + str(params))
+    template = result["template_mined"]
+    params = template_miner.get_parameter_list(template, log_line)
+    print("Parameters: " + str(params))
 
-print("Clusters:")
+print("Trained Clusters:")
 for cluster in template_miner.drain.clusters:
     print(cluster)
+
+print(f"Training done. Starting inference only mode. Input log lines or press 'q' to finish")
+while True:
+    log_line = input("> ")
+    if log_line == 'q':
+        break
+    cluster = template_miner.match(log_line)
+    if cluster is None:
+        print(f"No match found")
+    else:
+        template = cluster.get_template()
+        print(f"Matched template #{cluster.cluster_id}: {template}")
+        print(f"Parameters: {template_miner.get_parameter_list(template, log_line)}")
