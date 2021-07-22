@@ -113,37 +113,44 @@ class DrainTest(unittest.TestCase):
         self.assertListEqual(list(map(str.strip, expected)), actual)
         self.assertEqual(1, model.get_total_cluster_size())
 
-    def test_max_clusters_lru(self):
-        """When max number of clusters is reached, then clusters are removed
-        according to the lru policy.
+    def test_max_clusters_lru_multiple_leaf_nodes(self):
+        """When all templates end up in different nodes and the max number of
+        clusters is reached, then clusters are removed according to the lru
+        policy.
         """
-        model = Drain(max_clusters=3, depth=3)
+        model = Drain(max_clusters=2, depth=4, param_str="*")
         entries = [
-            "A A foramt 1",
-            "A A foramt 2",
-            "A B format 1",
-            "A B format 2",
-            "B format 1",
-            "B format 2",
-            "A A foramt 3",
-            "C foramt 1",
-            "A B format 3",
+            "A A A",
+            "A A B",
+            "B A A",
+            "B A B",
+            "C A A",
+            "C A B",
+            "B A A",
+            "A A A",
         ]
         expected = [
-            "A A foramt 1",  # LRU = ["A"]
-            "A A foramt <*>",  # LRU = ["A"]
-            # Use "A A" prefix to make sure both "A" and "A A" clusters end up
-            # in the same leaf node. This is a setup for an interesting edge
-            # case.
-            "A B format 1",  # LRU = ["AA", "A"]
-            "A B format <*>",  # LRU = ["AA", "A"]
-            "B format 1",  # LRU = ["B", "A A", "A"]
-            "B format <*>",  # LRU = ["B", "A A", "A"]
-            "A A foramt <*>",  # LRU = ["A", "B", "A A"]
-            "C foramt 1",  # LRU = ["C", "A", "B"]
-            # Cluster "A A" should have been removed in the previous step, thus,
-            # it should be recognized as a new cluster with no slots.
-            "A B format 3",  # LRU = ["A A', "C", "A"]
+            # lru: []
+            "A A A",
+            # lru: ["A A A"]
+            "A A *",
+            # lru: ["A A *"]
+            "B A A",
+            # lru: ["B A A", "A A *"]
+            "B A *",
+            # lru: ["B A *", "A A *"]
+            "C A A",
+            # lru: ["C A A", "B A *"]
+            "C A *",
+            # lru: ["C A *", "B A *"]
+            "B A *",
+            # Message "B A A" was normalized because the template "B A *" is
+            # still present in the cache.
+            # lru: ["B A *", "C A *"]
+            "A A A",
+            # Message "A A A" was not normalized because the template "C A A"
+            # pushed out the template "A A *" from the cache.
+            # lru: ["A A A", "C A *"]
         ]
         actual = []
 
@@ -152,7 +159,56 @@ class DrainTest(unittest.TestCase):
             actual.append(cluster.get_template())
 
         self.assertListEqual(list(map(str.strip, expected)), actual)
-        self.assertEqual(5, model.get_total_cluster_size())
+        self.assertEqual(4, model.get_total_cluster_size())
+
+    def test_max_clusters_lru_single_leaf_node(self):
+        """When all templates end up in the same leaf node and the max number of
+        clusters is reached, then clusters are removed according to the lru
+        policy.
+        """
+        model = Drain(max_clusters=2, depth=4, param_str="*")
+        entries = [
+            "A A A",
+            "A A B",
+            "A B A",
+            "A B B",
+            "A C A",
+            "A C B",
+            "A B A",
+            "A A A",
+        ]
+        expected = [
+            # lru: []
+            "A A A",
+            # lru: ["A A A"]
+            "A A *",
+            # lru: ["A A *"]
+            "A B A",
+            # lru: ["B A A", "A A *"]
+            "A B *",
+            # lru: ["B A *", "A A *"]
+            "A C A",
+            # lru: ["C A A", "B A *"]
+            "A C *",
+            # lru: ["C A *", "B A *"]
+            "A B *",
+            # Message "B A A" was normalized because the template "B A *" is
+            # still present in the cache.
+            # lru: ["B A *", "C A *"]
+            "A A A",
+            # Message "A A A" was not normalized because the template "C A A"
+            # pushed out the template "A A *" from the cache.
+            # lru: ["A A A", "C A *"]
+        ]
+        actual = []
+
+        for entry in entries:
+            cluster, _ = model.add_log_message(entry)
+            actual.append(cluster.get_template())
+
+        self.assertListEqual(list(map(str.strip, expected)), actual)
+        # self.assertEqual(5, model.get_total_cluster_size())
+
 
     def test_match_only(self):
         model = Drain()
