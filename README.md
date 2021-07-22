@@ -311,9 +311,10 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 
 ## Change Log
 
-##### v0.9.6 (WIP)
+##### v0.9.6
 
-* Speed optimization in case cluster already exist
+* Fix issue https://github.com/IBM/Drain3/issues/38: Unnecessary update of 
+  LRU cache in case `max_clusters` is used (thanks @StanislawSwierc).
 
 ##### v0.9.5
 
