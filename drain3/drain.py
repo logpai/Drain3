@@ -26,6 +26,23 @@ class LogCluster:
         return f"ID={str(self.cluster_id).ljust(5)} : size={str(self.size).ljust(10)}: {self.get_template()}"
 
 
+class LogClusterCache(LRUCache):
+    """
+    Least Recently Used (LRU) cache which allows callers to conditionally skip
+    cache eviction algorithm when accessing elements.
+    """
+
+    def __missing__(self, key):
+        return None
+
+    def get(self, key):
+        """
+        Returns the value of the item with the specified key without updating
+        the cache eviction algorithm.
+        """
+        return Cache.__getitem__(self, key)
+
+
 class Node:
     __slots__ = ["key_to_child_node", "cluster_ids"]
 
@@ -65,7 +82,7 @@ class Drain:
         self.param_str = param_str
 
         # key: int, value: LogCluster
-        self.id_to_cluster = {} if max_clusters is None else LRUCache(maxsize=max_clusters)
+        self.id_to_cluster = {} if max_clusters is None else LogClusterCache(maxsize=max_clusters)
         self.clusters_counter = 0
 
     @property
@@ -216,7 +233,7 @@ class Drain:
         for cluster_id in cluster_ids:
             # Try to retrieve cluster from cache with bypassing eviction
             # algorithm as we are only testing candidates for a match.
-            cluster = Cache.get(self.id_to_cluster, cluster_id)
+            cluster = self.id_to_cluster.get(cluster_id)
             if cluster is None:
                 continue
             cur_sim, param_count = self.get_seq_distance(cluster.log_template_tokens, tokens, include_params)
@@ -295,7 +312,7 @@ class Drain:
                 update_type = "cluster_template_changed"
             match_cluster.size += 1
             # Touch cluster to update its state in the cache.
-            self.id_to_cluster.get(match_cluster.cluster_id)
+            self.id_to_cluster[match_cluster.cluster_id]
 
         if self.profiler:
             self.profiler.end_section()
