@@ -311,6 +311,17 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 
 ## Change Log
 
+##### v0.9.7
+
+* Fixed bug in original Drain: log clusters were created multiple times for 
+  log messages with fewer tokens than `max_node_depth`. 
+* Changed `depth` property name to a more descriptive name `max_node_depth` 
+  as Drain always subtracts 2 of `depth` argument value. Also added `log_cluster_depth`  
+  property to reflect original value of depth argument (Breaking Change).
+* Restricted `depth` param to minimum sensible value of 3
+* Added log cluster count to nodes in `Drain.print_tree()`
+* Added optional log cluster details to `Drain.print_tree()`
+
 ##### v0.9.6
 
 * Fix issue https://github.com/IBM/Drain3/issues/38: Unnecessary update of 

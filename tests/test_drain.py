@@ -4,6 +4,26 @@ from drain3.drain import Drain, LogCluster
 
 
 class DrainTest(unittest.TestCase):
+
+    def test_add_shorter_than_depth_message(self):
+        model = Drain(depth=4)
+        res = model.add_log_message("word")
+        print(res[1])
+        print(res[0])
+        self.assertEqual(res[1], "cluster_created")
+
+        res = model.add_log_message("word")
+        print(res[1])
+        print(res[0])
+        self.assertEqual(res[1], "none")
+
+        res = model.add_log_message("otherword")
+        print(res[1])
+        print(res[0])
+        self.assertEqual(res[1], "cluster_created")
+
+        self.assertEqual(2, len(model.id_to_cluster))
+
     def test_add_log_message(self):
         model = Drain()
         entries = str.splitlines(
@@ -209,7 +229,6 @@ class DrainTest(unittest.TestCase):
         self.assertListEqual(list(map(str.strip, expected)), actual)
         # self.assertEqual(5, model.get_total_cluster_size())
 
-
     def test_match_only(self):
         model = Drain()
         res = model.add_log_message("aa aa aa")
@@ -235,3 +254,4 @@ class DrainTest(unittest.TestCase):
 
         c: LogCluster = model.match("nothing")
         self.assertIsNone(c)
+
