@@ -365,6 +365,11 @@ class Drain:
         required_sim_th = 1.0
         content_tokens = self.get_content_as_tokens(content)
 
+        # consider for future improvement:
+        # It is possible to implement a recursive tree_search (first try exact token match and fallback to
+        # wildcard match). This will be both accurate and more efficient than the linear full search
+        # also fast match can be optimized when exact match is required by early
+        # quitting on less than exact cluster matches.
         def full_search():
             all_ids = list(self.id_to_cluster.keys())
             cluster = self.fast_match(all_ids, content_tokens, required_sim_th, include_params=True)
