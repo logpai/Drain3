@@ -155,11 +155,13 @@ class TemplateMiner:
         :param full_search_strategy: when to perform full cluster search.
             (1) "never" is the fastest, will always perform a tree search [O(log(n)] but might produce
             false negatives (wrong mismatches) on some edge cases;
-            (2) "fallback" will perform a full search [O(n)] only in case tree search found no match.
+            (2) "fallback" will perform a linear search [O(n)] among all clusters with the same token count, but only in
+            case tree search found no match.
             It should not have false negatives, however tree-search may find a non-optimal match with
             more wildcard parameters than necessary;
-            (3) "always" is the slowest, will select the best match among all known clusters by always evaluating
-            all clusters and selecting the cluster with perfect all token match and least count of wildcard matches.
+            (3) "always" is the slowest. It will select the best match among all known clusters, by always evaluating
+            all clusters with the same token count, and selecting the cluster with perfect all token match and least
+            count of wildcard matches.
         :return: Matched cluster or None if no match found.
         """
 

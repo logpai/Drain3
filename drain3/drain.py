@@ -213,6 +213,11 @@ class Drain:
     # seq1 is a template, seq2 is the log to match
     def get_seq_distance(self, seq1, seq2, include_params: bool):
         assert len(seq1) == len(seq2)
+
+        # sequences are empty - full match
+        if len(seq1) == 0:
+            return 1.0, 0
+
         sim_tokens = 0
         param_count = 0
 
@@ -345,6 +350,26 @@ class Drain:
 
         return match_cluster, update_type
 
+    def get_clusters_ids_for_seq_len(self, seq_len: int):
+        """
+        Return all clusters with the specified count of tokens
+        """
+
+        def append_clusters_recursive(node: Node, id_list_to_fill: list):
+            id_list_to_fill.extend(node.cluster_ids)
+            for child_node in node.key_to_child_node.values():
+                append_clusters_recursive(child_node, id_list_to_fill)
+
+        cur_node = self.root_node.key_to_child_node.get(str(seq_len))
+
+        # no template with same token count
+        if cur_node is None:
+            return []
+
+        target = []
+        append_clusters_recursive(cur_node, target)
+        return target
+
     def match(self, content: str, full_search_strategy="never"):
         """
         Match log message against an already existing cluster.
@@ -355,11 +380,13 @@ class Drain:
         :param full_search_strategy: when to perform full cluster search.
             (1) "never" is the fastest, will always perform a tree search [O(log(n)] but might produce
             false negatives (wrong mismatches) on some edge cases;
-            (2) "fallback" will perform a full search [O(n)] only in case tree search found no match.
+            (2) "fallback" will perform a linear search [O(n)] among all clusters with the same token count, but only in
+            case tree search found no match.
             It should not have false negatives, however tree-search may find a non-optimal match with
             more wildcard parameters than necessary;
-            (3) "always" is the slowest, will select the best match among all known clusters by always evaluating
-            all clusters and selecting the cluster with perfect all token match and least count of wildcard matches.
+            (3) "always" is the slowest. It will select the best match among all known clusters, by always evaluating
+            all clusters with the same token count, and selecting the cluster with perfect all token match and least
+            count of wildcard matches.
         :return: Matched cluster or None if no match found.
         """
 
@@ -374,7 +401,7 @@ class Drain:
         # also fast match can be optimized when exact match is required by early
         # quitting on less than exact cluster matches.
         def full_search():
-            all_ids = self.id_to_cluster.keys()
+            all_ids = self.get_clusters_ids_for_seq_len(len(content_tokens))
             cluster = self.fast_match(all_ids, content_tokens, required_sim_th, include_params=True)
             return cluster
 
