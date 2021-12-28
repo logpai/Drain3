@@ -58,7 +58,8 @@ class TemplateMiner:
             max_clusters=self.config.drain_max_clusters,
             extra_delimiters=self.config.drain_extra_delimiters,
             profiler=self.profiler,
-            param_str=param_str
+            param_str=param_str,
+            parametrize_numeric_tokens=self.config.parametrize_numeric_tokens
         )
         self.masker = LogMasker(self.config.masking_instructions, self.config.mask_prefix, self.config.mask_suffix)
         self.last_save_time = time.time()
@@ -149,13 +150,14 @@ class TemplateMiner:
         Mask log message and match against an already existing cluster.
         Match shall be perfect (sim_th=1.0).
         New cluster will not be created as a result of this call, nor any cluster modifications.
+
         :param log_message: log message to match
         :param full_search_strategy: when to perform full cluster search.
-        "never" is fastest, will always perform tree search [O(log(n)] but might produce
-        false negatives (wrong mismatches) on some edge cases.
-        "fallback" will perform full search [O(n)] only in case tree search found no match.
-        It may find a non-optimal match with more wildcard parameters than necessary.
-        "always" is slowest, will select the best match among all known clusters.
+            "never" is fastest, will always perform tree search [O(log(n)] but might produce
+            false negatives (wrong mismatches) on some edge cases;
+            "fallback" will perform full search [O(n)] only in case tree search found no match;
+            It may find a non-optimal match with more wildcard parameters than necessary.
+            "always" is slowest, will select the best match among all known clusters.
         :return: Matched cluster or None if no match found.
         """
 

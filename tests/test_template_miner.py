@@ -139,3 +139,13 @@ class TemplateMinerTest(unittest.TestCase):
         self.assertIsNotNone(miner.match("loadModel start", full_search_strategy="fallback"))
         self.assertIsNotNone(miner.match("loadModel start", full_search_strategy="always"))
         self.assertIsNotNone(miner.match("loadModel start", full_search_strategy="never"))
+
+        config = TemplateMinerConfig()
+        config.parametrize_numeric_tokens = False
+        miner = TemplateMiner(config=config)
+        print(miner.add_log_message("training4Model start"))
+        print(miner.add_log_message("loadModel start"))
+        print(miner.add_log_message("loadModel stop"))
+        self.assertIsNotNone(miner.match("loadModel start", full_search_strategy="fallback"))
+        self.assertIsNotNone(miner.match("loadModel start", full_search_strategy="always"))
+        self.assertIsNotNone(miner.match("loadModel start", full_search_strategy="never"))

@@ -59,23 +59,25 @@ class Drain:
                  max_clusters=None,
                  extra_delimiters=(),
                  profiler: Profiler = NullProfiler(),
-                 param_str="<*>"):
+                 param_str="<*>",
+                 parametrize_numeric_tokens=True):
         """
-        Attributes
-        ----------
-            depth : max depth levels of log clusters. Minimum is 2.
-                For example, for depth==4:
-                Root is considered depth level 1.
-                Token count is considered depth level 2.
-                First log token is considered depth level 3.
-                Log clusters below first token node are considered depth level 4.
-            sim_th : similarity threshold - if percentage of similar tokens for a log message is below this
-                number, a new log cluster will be created.
-            max_children : max number of children of an internal node
-            max_clusters : max number of tracked clusters (unlimited by default).
-                When this number is reached, model starts replacing old clusters
-                with a new ones according to the LRU policy.
-            extra_delimiters: delimiters to apply when splitting log message into words (in addition to whitespace).
+        Create a new Drain instance.
+
+        :param depth: max depth levels of log clusters. Minimum is 2.
+            For example, for depth==4, Root is considered depth level 1.
+            Token count is considered depth level 2.
+            First log token is considered depth level 3.
+            Log clusters below first token node are considered depth level 4.
+        :param sim_th: similarity threshold - if percentage of similar tokens for a log message is below this
+            number, a new log cluster will be created.
+        :param max_children: max number of children of an internal node
+        :param max_clusters: max number of tracked clusters (unlimited by default).
+            When this number is reached, model starts replacing old clusters
+            with a new ones according to the LRU policy.
+        :param extra_delimiters: delimiters to apply when splitting log message into words (in addition to whitespace).
+        :param parametrize_numeric_tokens: whether to treat tokens that contains at least one digit
+            as template parameters.
         """
         if depth < 3:
             raise ValueError("depth argument must be at least 3")
@@ -89,6 +91,7 @@ class Drain:
         self.extra_delimiters = extra_delimiters
         self.max_clusters = max_clusters
         self.param_str = param_str
+        self.parametrize_numeric_tokens = parametrize_numeric_tokens
 
         # key: int, value: LogCluster
         self.id_to_cluster = {} if max_clusters is None else LogClusterCache(maxsize=max_clusters)
@@ -172,7 +175,15 @@ class Drain:
 
             # if token not matched in this layer of existing tree.
             if token not in cur_node.key_to_child_node:
-                if not self.has_numbers(token):
+                if self.parametrize_numeric_tokens and self.has_numbers(token):
+                    if self.param_str not in cur_node.key_to_child_node:
+                        new_node = Node()
+                        cur_node.key_to_child_node[self.param_str] = new_node
+                        cur_node = new_node
+                    else:
+                        cur_node = cur_node.key_to_child_node[self.param_str]
+
+                else:
                     if self.param_str in cur_node.key_to_child_node:
                         if len(cur_node.key_to_child_node) < self.max_children:
                             new_node = Node()
@@ -191,14 +202,6 @@ class Drain:
                             cur_node = new_node
                         else:
                             cur_node = cur_node.key_to_child_node[self.param_str]
-
-                else:
-                    if self.param_str not in cur_node.key_to_child_node:
-                        new_node = Node()
-                        cur_node.key_to_child_node[self.param_str] = new_node
-                        cur_node = new_node
-                    else:
-                        cur_node = cur_node.key_to_child_node[self.param_str]
 
             # if the token is matched
             else:
@@ -346,13 +349,14 @@ class Drain:
         Match log message against an already existing cluster.
         Match shall be perfect (sim_th=1.0).
         New cluster will not be created as a result of this call, nor any cluster modifications.
+
         :param content: log message to match
         :param full_search_strategy: when to perform full cluster search.
-        "never" is fastest, will always perform tree search [O(log(n)] but might produce
-        false negatives (wrong mismatches) on some edge cases.
-        "fallback" will perform full search [O(n)] only in case tree search found no match.
-        It may find a non-optimal match with more wildcard parameters than necessary.
-        "always" is slowest, will select the best match among all known clusters.
+            "never" is fastest, will always perform tree search [O(log(n)] but might produce
+            false negatives (wrong mismatches) on some edge cases;
+            "fallback" will perform full search [O(n)] only in case tree search found no match;
+            It may find a non-optimal match with more wildcard parameters than necessary.
+            "always" is slowest, will select the best match among all known clusters.
         :return: Matched cluster or None if no match found.
         """
 
