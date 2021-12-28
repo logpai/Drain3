@@ -206,7 +206,7 @@ class Drain:
 
             current_depth += 1
 
-    # seq1 is template
+    # seq1 is a template, seq2 is the log to match
     def get_seq_distance(self, seq1, seq2, include_params: bool):
         assert len(seq1) == len(seq2)
         sim_tokens = 0
@@ -341,16 +341,42 @@ class Drain:
 
         return match_cluster, update_type
 
-    def match(self, content: str):
+    def match(self, content: str, full_search_strategy="never"):
         """
-        Match against an already existing cluster. Match shall be perfect (sim_th=1.0).
+        Match log message against an already existing cluster.
+        Match shall be perfect (sim_th=1.0).
         New cluster will not be created as a result of this call, nor any cluster modifications.
         :param content: log message to match
-        :return: Matched cluster or None of no match found.
+        :param full_search_strategy: when to perform full cluster search.
+        "never" is fastest, will always perform tree search [O(log(n)] but might produce
+        false negatives (wrong mismatches) on some edge cases.
+        "fallback" will perform full search [O(n)] only in case tree search found no match.
+        It may find a non-optimal match with more wildcard parameters than necessary.
+        "always" is slowest, will select the best match among all known clusters.
+        :return: Matched cluster or None if no match found.
         """
+
+        assert full_search_strategy in ["always", "never", "fallback"]
+
+        required_sim_th = 1.0
         content_tokens = self.get_content_as_tokens(content)
-        match_cluster = self.tree_search(self.root_node, content_tokens, 1.0, True)
-        return match_cluster
+
+        def full_search():
+            all_ids = list(self.id_to_cluster.keys())
+            cluster = self.fast_match(all_ids, content_tokens, required_sim_th, include_params=True)
+            return cluster
+
+        if full_search_strategy == "always":
+            return full_search()
+
+        match_cluster = self.tree_search(self.root_node, content_tokens, required_sim_th, include_params=True)
+        if match_cluster is not None:
+            return match_cluster
+
+        if full_search_strategy == "never":
+            return None
+
+        return full_search()
 
     def get_total_cluster_size(self):
         size = 0

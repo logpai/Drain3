@@ -125,3 +125,17 @@ class TemplateMinerTest(unittest.TestCase):
 
         c = tm.match("rrr qqq num")
         self.assertIsNone(c)
+
+    def test_match_strategies(self):
+        miner = TemplateMiner()
+        print(miner.add_log_message("training4Model start"))
+        print(miner.add_log_message("loadModel start"))
+        print(miner.add_log_message("loadModel stop"))
+        miner.drain.print_tree()
+        self.assertIsNotNone(miner.match("loadModel start", full_search_strategy="fallback"))
+        self.assertIsNotNone(miner.match("loadModel start", full_search_strategy="always"))
+        self.assertIsNone(miner.match("loadModel start", full_search_strategy="never"))
+        print(miner.add_log_message("loadModel start"))
+        self.assertIsNotNone(miner.match("loadModel start", full_search_strategy="fallback"))
+        self.assertIsNotNone(miner.match("loadModel start", full_search_strategy="always"))
+        self.assertIsNotNone(miner.match("loadModel start", full_search_strategy="never"))

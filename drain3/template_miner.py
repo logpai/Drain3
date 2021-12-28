@@ -8,9 +8,9 @@ import base64
 import logging
 import re
 import time
+import zlib
 
 import jsonpickle
-import zlib
 from cachetools import LRUCache
 
 from drain3.drain import Drain, LogCluster
@@ -144,16 +144,23 @@ class TemplateMiner:
         self.profiler.report(self.config.profiling_report_sec)
         return result
 
-    def match(self, log_message: str) -> LogCluster:
+    def match(self, log_message: str, full_search_strategy="never") -> LogCluster:
+        """
+        Mask log message and match against an already existing cluster.
+        Match shall be perfect (sim_th=1.0).
+        New cluster will not be created as a result of this call, nor any cluster modifications.
+        :param log_message: log message to match
+        :param full_search_strategy: when to perform full cluster search.
+        "never" is fastest, will always perform tree search [O(log(n)] but might produce
+        false negatives (wrong mismatches) on some edge cases.
+        "fallback" will perform full search [O(n)] only in case tree search found no match.
+        It may find a non-optimal match with more wildcard parameters than necessary.
+        "always" is slowest, will select the best match among all known clusters.
+        :return: Matched cluster or None if no match found.
+        """
 
-        """
-          Match against an already existing cluster. Match shall be perfect (sim_th=1.0).
-          New cluster will not be created as a result of this call, nor any cluster modifications.
-          :param log_message: log message to match
-          :return: Matched cluster or None of no match found.
-        """
         masked_content = self.masker.mask(log_message)
-        matched_cluster = self.drain.match(masked_content)
+        matched_cluster = self.drain.match(masked_content, full_search_strategy)
         return matched_cluster
 
     def get_parameter_list(self, log_template: str, content: str):
