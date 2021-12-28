@@ -4,7 +4,8 @@ Author      : LogPAI team
 Modified by : david.ohana@ibm.com, moshikh@il.ibm.com
 License     : MIT
 """
-from typing import List, Dict
+from collections import KeysView
+from typing import List, Dict, Sequence, Union
 
 from cachetools import LRUCache, Cache
 
@@ -229,7 +230,7 @@ class Drain:
 
         return ret_val, param_count
 
-    def fast_match(self, cluster_ids: list, tokens: list, sim_th: float, include_params: bool):
+    def fast_match(self, cluster_ids: Union[Sequence, KeysView], tokens: list, sim_th: float, include_params: bool):
         """
         Find the best match for a log message (represented as tokens) versus a list of clusters
         :param cluster_ids: List of clusters to match against (represented by their IDs)
@@ -352,11 +353,13 @@ class Drain:
 
         :param content: log message to match
         :param full_search_strategy: when to perform full cluster search.
-            "never" is fastest, will always perform tree search [O(log(n)] but might produce
+            (1) "never" is the fastest, will always perform a tree search [O(log(n)] but might produce
             false negatives (wrong mismatches) on some edge cases;
-            "fallback" will perform full search [O(n)] only in case tree search found no match;
-            It may find a non-optimal match with more wildcard parameters than necessary.
-            "always" is slowest, will select the best match among all known clusters.
+            (2) "fallback" will perform a full search [O(n)] only in case tree search found no match.
+            It should not have false negatives, however tree-search may find a non-optimal match with
+            more wildcard parameters than necessary;
+            (3) "always" is the slowest, will select the best match among all known clusters by always evaluating
+            all clusters and selecting the cluster with perfect all token match and least count of wildcard matches.
         :return: Matched cluster or None if no match found.
         """
 
@@ -371,7 +374,7 @@ class Drain:
         # also fast match can be optimized when exact match is required by early
         # quitting on less than exact cluster matches.
         def full_search():
-            all_ids = list(self.id_to_cluster.keys())
+            all_ids = self.id_to_cluster.keys()
             cluster = self.fast_match(all_ids, content_tokens, required_sim_th, include_params=True)
             return cluster
 
