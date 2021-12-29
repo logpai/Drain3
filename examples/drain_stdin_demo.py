@@ -48,7 +48,7 @@ config.profiling_enabled = False
 
 template_miner = TemplateMiner(persistence, config)
 print(f"Drain3 started with '{persistence_type}' persistence")
-print(f"Reading from std-in (input 'q' to finish)")
+print(f"Starting training mode. Reading from std-in ('q' to finish)")
 while True:
     log_line = input("> ")
     if log_line == 'q':
@@ -60,11 +60,11 @@ while True:
     params = template_miner.get_parameter_list(template, log_line)
     print("Parameters: " + str(params))
 
-print("Trained Clusters:")
+print("Training done. Mined clusters:")
 for cluster in template_miner.drain.clusters:
     print(cluster)
 
-print(f"Training done. Starting inference only mode. Input log lines or press 'q' to finish")
+print(f"Starting inference mode, matching to pre-trained clusters. Input log lines or 'q' to finish")
 while True:
     log_line = input("> ")
     if log_line == 'q':
