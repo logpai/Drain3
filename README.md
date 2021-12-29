@@ -317,6 +317,8 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 See more info at Issue [#48](https://github.com/IBM/Drain3/issues/48).
 * Added an option to disable parameterization of tokens 
 that contains digits in configuration: `TemplateMinerConfig.parametrize_numeric_tokens`
+* Loading Drain snapshot now only restores clusters state and not configuration parameters. This improves 
+backwards compatibility when introducing new Drain configuration parameters.
 
 ##### v0.9.7
 
