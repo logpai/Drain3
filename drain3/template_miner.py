@@ -77,23 +77,24 @@ class TemplateMiner:
         if self.config.snapshot_compress_state:
             state = zlib.decompress(base64.b64decode(state))
 
-        drain: Drain = jsonpickle.loads(state, keys=True)
+        loaded_drain: Drain = jsonpickle.loads(state, keys=True)
 
         # json-pickle encoded keys as string by default, so we have to convert those back to int
         # this is only relevant for backwards compatibility when loading a snapshot of drain <= v0.9.1
         # which did not use json-pickle's keys=true
-        if len(drain.id_to_cluster) > 0 and isinstance(next(iter(drain.id_to_cluster.keys())), str):
-            drain.id_to_cluster = {int(k): v for k, v in list(drain.id_to_cluster.items())}
+        if len(loaded_drain.id_to_cluster) > 0 and isinstance(next(iter(loaded_drain.id_to_cluster.keys())), str):
+            loaded_drain.id_to_cluster = {int(k): v for k, v in list(loaded_drain.id_to_cluster.items())}
             if self.config.drain_max_clusters:
                 cache = LRUCache(maxsize=self.config.drain_max_clusters)
-                cache.update(drain.id_to_cluster)
-                drain.id_to_cluster = cache
+                cache.update(loaded_drain.id_to_cluster)
+                loaded_drain.id_to_cluster = cache
 
-        drain.profiler = self.profiler
+        self.drain.id_to_cluster = loaded_drain.id_to_cluster
+        self.drain.clusters_counter = loaded_drain.clusters_counter
+        self.drain.root_node = loaded_drain.root_node
 
-        self.drain = drain
-        logger.info("Restored {0} clusters with {1} messages".format(
-            len(drain.clusters), drain.get_total_cluster_size()))
+        logger.info("Restored {0} clusters built from {1} messages".format(
+            len(loaded_drain.clusters), loaded_drain.get_total_cluster_size()))
 
     def save_state(self, snapshot_reason):
         state = jsonpickle.dumps(self.drain, keys=True).encode('utf-8')
