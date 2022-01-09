@@ -77,11 +77,116 @@ class TemplateMinerTest(unittest.TestCase):
         add_and_test("hello", [])
         add_and_test("hello ABC", [])
         add_and_test("hello BCD", ["BCD"])
+        add_and_test("hello    BCD", ["BCD"])
+        add_and_test("hello\tBCD", ["BCD"])
         add_and_test("request took 123 ms", ["123"])
         add_and_test("file saved [test.xml]", [])
         add_and_test("new order received: [:xyz:]", [])
         add_and_test("order type: new, order priority:3", ["3"])
         add_and_test("order type: changed, order priority:5", ["changed,", "5"])
+
+    def test_get_param_list_direct(self):
+        config = TemplateMinerConfig()
+        mi = MaskingInstruction(r"hdfs://[\w.:@-]*((/[\w.~%+-]+)+/?)?", "hdfs_uri")
+        config.masking_instructions.append(mi)
+        mi = MaskingInstruction(r"(\d{1,3}\.){3}\d{1,3}", "ip")
+        config.masking_instructions.append(mi)
+        mi = MaskingInstruction(r"[+-]?\b\d+\.\d+\b", "float")
+        config.masking_instructions.append(mi)
+        mi = MaskingInstruction(r"(?<=[:=+])[+-]?\b\d+\b", "integer")
+        config.masking_instructions.append(mi)
+        mi = MaskingInstruction(r"\b\d{1,5}\b", "port")
+        config.masking_instructions.append(mi)
+        mi = MaskingInstruction(r"HelloWorld", "*")
+        config.masking_instructions.append(mi)
+        mi = MaskingInstruction(r"multiple word pattern", "*words*")
+        config.masking_instructions.append(mi)
+        template_miner = TemplateMiner(None, config)
+
+        test_vectors = [
+            (
+                "<hdfs_uri>:<integer>+<integer>",
+                "hdfs://msra-sa-41:9000/pageinput2.txt:671088640+134217728",
+                ["hdfs://msra-sa-41:9000/pageinput2.txt", "671088640", "134217728"]
+            ),
+            (
+                "<float>.<*>",
+                "0.15.Test",
+                ["0.15", "Test"]
+            ),
+            (
+                "<ip>:<port>",
+                "192.0.0.1:5000",
+                ["192.0.0.1", "5000"]
+            ),
+            (
+                "<ip>:<port>:<integer>",
+                "192.0.0.1:5000:123",
+                ["192.0.0.1", "5000", "123"]
+            ),
+            (
+                "<float>.<*>.<float>",
+                "0.15.Test.0.2",
+                ["0.15", "Test", "0.2"]
+            ),
+            (
+                "<float> <float>",
+                "0.15 10.16",
+                ["0.15", "10.16"]
+            ),
+            (
+                "<*words*> <*>",
+                "multiple word pattern <*words*>",
+                ["multiple word pattern", "<*words*>"]
+            ),
+            (
+                "<*> <*>",
+                "HelloWorld Test",
+                ["HelloWorld", "Test"]
+            ),
+            (
+                "<*> <*>",
+                "HelloWorld <anything>",
+                ["HelloWorld", "<anything>"]
+            ),
+            (
+                "<*> works <*>",
+                "This works as-expected",
+                ["This", "as-expected"]
+            ),
+            # This case fails, because *-masks cannot be differentiated
+            # from those created by Drain.
+            # (
+            #     "<*><integer>",
+            #     "HelloWorld1",
+            #     ["HelloWorld", "1"]
+            # ),
+
+            # Template does not match content (next cases):
+            # It should not even be possible to get such a template,
+            # if the template is produced using TemplateMiner.
+            (
+                "<float> <float>",
+                "0.15 10.16 3.19",
+                []
+            ),
+            (
+                "<float> <float>",
+                "0.15 10.16 test 3.19",
+                []
+            ),
+            # This case fails, because masks are not differentiated.
+            # (
+            #     "<*words*> <*words*>",
+            #     "0.15 0.15",
+            #     []
+            # ),
+        ]
+
+        for (template, content, expected_parameters) in test_vectors:
+            with self.subTest(template=template, content=content, expected_parameters=expected_parameters):
+                parameters = template_miner.get_parameter_list(template, content)
+                self.assertListEqual(parameters, expected_parameters)
 
     def test_match_only(self):
         config = TemplateMinerConfig()
