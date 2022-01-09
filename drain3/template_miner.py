@@ -177,8 +177,11 @@ class TemplateMiner:
         if self.drain.param_str not in template_regex:
             return []
         template_regex = re.escape(template_regex)
+        # match also messages with multiple spaces or other whitespace chars between tokens
         template_regex = re.sub(r'\\ +', r'\\s+', template_regex)
-        template_regex = "^" + template_regex.replace(escaped_prefix + r"\*" + escaped_suffix, "(.*?)") + "$"
+        mask_search_pattern = "(\\S+)"  # mask is satisfied by a non-whitespace sequence.
+        template_regex = template_regex.replace(escaped_prefix + r"\*" + escaped_suffix, mask_search_pattern)
+        template_regex = "^" + template_regex + "$"
 
         for delimiter in self.config.drain_extra_delimiters:
             content = re.sub(delimiter, ' ', content)
@@ -189,5 +192,7 @@ class TemplateMiner:
         def is_mask(p: str):
             return p.startswith(self.config.mask_prefix) and p.endswith(self.config.mask_suffix)
 
+        # If the raw log message has some content in the form of a mask, the approach above will consider it
+        # as a parameter. Next statement filters out those cases.
         parameter_list = [p for p in list(parameter_list) if not is_mask(p)]
         return parameter_list

@@ -77,11 +77,73 @@ class TemplateMinerTest(unittest.TestCase):
         add_and_test("hello", [])
         add_and_test("hello ABC", [])
         add_and_test("hello BCD", ["BCD"])
+        add_and_test("hello    BCD", ["BCD"])
+        add_and_test("hello\tBCD", ["BCD"])
         add_and_test("request took 123 ms", ["123"])
         add_and_test("file saved [test.xml]", [])
         add_and_test("new order received: [:xyz:]", [])
         add_and_test("order type: new, order priority:3", ["3"])
         add_and_test("order type: changed, order priority:5", ["changed,", "5"])
+
+    def test_get_param_list_direct(self):
+        template_miner = TemplateMiner()
+        template = "<hdfs_uri>:<number>+<number>"
+        content = "hdfs://msra-sa-41:9000/pageinput2.txt:671088640+134217728"
+        params = template_miner.get_parameter_list(template, content)
+        expected_params = ["hdfs://msra-sa-41:9000/pageinput2.txt", "671088640", "134217728"]
+        self.assertListEqual(params, expected_params)
+
+        template = "<float>.<*>"
+        content = "0.15.Test"
+        params = template_miner.get_parameter_list(template, content)
+        expected_params = ["0.15", "Test"]
+        self.assertListEqual(params, expected_params)
+
+        template = "<ip>:<port>"
+        content = "192.0.0.1:5000"
+        params = template_miner.get_parameter_list(template, content)
+        expected_params = ["192.0.0.1", "5000"]
+        self.assertListEqual(params, expected_params)
+
+        template = "<ip>:<port>:<num>"
+        content = "192.0.0.1:5000:123"
+        params = template_miner.get_parameter_list(template, content)
+        expected_params = ["192.0.0.1", "5000", "123"]
+        self.assertListEqual(params, expected_params)
+
+        # commented test below fails because current approach satisfies every mask by any non-whitespace sequence
+        # this means extra characters may be captured by the greedy match as in the example below
+        # todo: fix
+        # possible fixes:
+        # 1. capture exact mask regex
+        # 2. retain parameters while masking in both LogMasker and Drain core, preserving order.
+        # for more details see GitHub issue #49
+
+        # template = "<float>.<*>.<float>"
+        # content = "0.15.Test.0.2"
+        # params = template_miner.get_parameter_list(template, content)
+        # expected_params = ["0.15", "Test", "0.2"]
+        # self.assertListEqual(params, expected_params)
+
+        template = "<float> <float>"
+        content = "0.15 10.16"
+        params = template_miner.get_parameter_list(template, content)
+        expected_params = ["0.15", "10.16"]
+        self.assertListEqual(params, expected_params)
+
+        # template does not match content (next two cases)
+        # it should not even be possible to get such a template if template is produced using TemplateMiner
+        template = "<float> <float>"
+        content = "0.15 10.16 3.19"
+        params = template_miner.get_parameter_list(template, content)
+        expected_params = []
+        self.assertListEqual(params, expected_params)
+
+        template = "<float> <float>"
+        content = "0.15 10.16 test 3.19"
+        params = template_miner.get_parameter_list(template, content)
+        expected_params = []
+        self.assertListEqual(params, expected_params)
 
     def test_match_only(self):
         config = TemplateMinerConfig()
