@@ -4,8 +4,8 @@ Author      : Moshik Hershcovitch
 Author_email: moshikh@il.ibm.com
 License     : MIT
 """
-import re
 import abc
+import re
 from typing import Collection
 
 
@@ -47,7 +47,8 @@ RegexMaskingInstruction = MaskingInstruction
 
 class LogMasker:
 
-    def __init__(self, masking_instructions: Collection[AbstractMaskingInstruction], mask_prefix: str, mask_suffix: str):
+    def __init__(self, masking_instructions: Collection[AbstractMaskingInstruction],
+                 mask_prefix: str, mask_suffix: str):
         self.mask_prefix = mask_prefix
         self.mask_suffix = mask_suffix
         self.masking_instructions = masking_instructions

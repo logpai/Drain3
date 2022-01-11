@@ -72,7 +72,8 @@ class TemplateMinerTest(unittest.TestCase):
             print(f"msg: {msg}")
             res = template_miner.add_log_message(msg)
             print(f"result: {res}")
-            extracted_parameters = template_miner.extract_parameters(res["template_mined"], msg, exact_matching=exact_matching)
+            extracted_parameters = template_miner.extract_parameters(res["template_mined"], msg,
+                                                                     exact_matching=exact_matching)
             self.assertIsNotNone(extracted_parameters)
             params = [parameter.value for parameter in extracted_parameters]
             print(f"params: {params}")
@@ -296,8 +297,10 @@ class TemplateMinerTest(unittest.TestCase):
                     self.assertIsNone(extracted_parameters)
                 else:
                     self.assertIsNotNone(extracted_parameters)
-                    self.assertListEqual([parameter.value for parameter in extracted_parameters], expected_parameters)
-                    self.assertListEqual([parameter.mask_name for parameter in extracted_parameters], expected_mask_names)
+                    self.assertListEqual([parameter.value for parameter in extracted_parameters],
+                                         expected_parameters)
+                    self.assertListEqual([parameter.mask_name for parameter in extracted_parameters],
+                                         expected_mask_names)
 
     def test_match_only(self):
         config = TemplateMinerConfig()

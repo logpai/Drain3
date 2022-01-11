@@ -15,7 +15,7 @@ import jsonpickle
 from cachetools import LRUCache, cachedmethod
 
 from drain3.drain import Drain, LogCluster
-from drain3.masking import LogMasker, MaskingInstruction
+from drain3.masking import LogMasker
 from drain3.persistence_handler import PersistenceHandler
 from drain3.simple_profiler import SimpleProfiler, NullProfiler, Profiler
 from drain3.template_miner_config import TemplateMinerConfig
@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 config_filename = 'drain3.ini'
 
 ExtractedParameter = NamedTuple("ExtractedParameter", [("value", str), ("mask_name", str)])
+
 
 class TemplateMiner:
 
@@ -68,7 +69,6 @@ class TemplateMiner:
         self.last_save_time = time.time()
         if persistence_handler is not None:
             self.load_state()
-
 
     def load_state(self):
         logger.info("Checking for saved state")
@@ -179,7 +179,7 @@ class TemplateMiner:
         Extract parameters from a log message according to a provided template that was generated
         by calling `add_log_message()`.
 
-        Is is preferable to use extract_parameters.
+        This function is deprecated. Please use extract_parameters instead.
 
         :param log_template: log template corresponding to the log message
         :param log_message: log message to extract parameters from
@@ -191,16 +191,19 @@ class TemplateMiner:
             return []
         return [parameter.value for parameter in extracted_parameters]
 
-    def extract_parameters(self, log_template: str, log_message: str, exact_matching: bool = True) -> Optional[List[ExtractedParameter]]:
+    def extract_parameters(self,
+                           log_template: str,
+                           log_message: str,
+                           exact_matching: bool = True) -> Optional[List[ExtractedParameter]]:
         """
         Extract parameters from a log message according to a provided template that was generated
         by calling `add_log_message()`.
 
         For most accurate results, it is recommended that
-        - each `MaskingInstruction` has a unique `mask_with` value,
-        - no `MaskingInstruction` has a `mask_with` value of `*`,
-        - the regex-patterns of `MaskingInstruction` do not use unnamed backreferences;
-          instead use backreferences to named groups e.g. `(?P=some-name)`.
+        - Each `MaskingInstruction` has a unique `mask_with` value,
+        - No `MaskingInstruction` has a `mask_with` value of `*`,
+        - The regex-patterns of `MaskingInstruction` do not use unnamed back-references;
+          instead use back-references to named groups e.g. `(?P=some-name)`.
 
         :param log_template: log template corresponding to the log message
         :param log_message: log message to extract parameters from
@@ -214,7 +217,8 @@ class TemplateMiner:
         for delimiter in self.config.drain_extra_delimiters:
             log_message = re.sub(delimiter, " ", log_message)
 
-        template_regex, param_group_name_to_mask_name = self._get_template_parameter_extraction_regex(log_template, exact_matching)
+        template_regex, param_group_name_to_mask_name = self._get_template_parameter_extraction_regex(log_template,
+                                                                                                      exact_matching)
 
         # Parameters are represented by specific named groups inside template_regex.
         parameter_match = re.match(template_regex, log_message)
