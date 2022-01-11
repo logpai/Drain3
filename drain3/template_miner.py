@@ -217,19 +217,25 @@ class TemplateMiner:
         for delimiter in self.config.drain_extra_delimiters:
             log_message = re.sub(delimiter, " ", log_message)
 
-        template_regex, param_group_name_to_mask_name = self._get_template_parameter_extraction_regex(log_template,
-                                                                                                      exact_matching)
+        template_regex, param_group_name_to_mask_name = self._get_template_parameter_extraction_regex(
+            log_template, exact_matching)
 
         # Parameters are represented by specific named groups inside template_regex.
         parameter_match = re.match(template_regex, log_message)
+
+        # log template does not match template
         if not parameter_match:
             return None
-        parameter_details_list = []
+
+        # create list of extracted parameters
+        extracted_parameters = []
         for group_name, parameter in parameter_match.groupdict().items():
             if group_name in param_group_name_to_mask_name:
-                parameter_details_list.append(ExtractedParameter(parameter, param_group_name_to_mask_name[group_name]))
+                mask_name = param_group_name_to_mask_name[group_name]
+                extracted_parameter = ExtractedParameter(parameter, mask_name)
+                extracted_parameters.append(extracted_parameter)
 
-        return parameter_details_list
+        return extracted_parameters
 
     @cachedmethod(lambda self: self.parameter_extraction_cache)
     def _get_template_parameter_extraction_regex(self, log_template: str, exact_matching: bool):
