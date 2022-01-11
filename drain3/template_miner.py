@@ -256,8 +256,13 @@ class TemplateMiner:
                 for mi in masking_instructions:
                     # MaskingInstruction may already contain named groups.
                     # We replace group names in those named groups, to avoid conflicts due to duplicate names.
-                    mi_groups = mi.regex.groupindex.keys()
-                    pattern = mi.pattern
+                    if hasattr(mi, 'regex'):
+                        mi_groups = mi.regex.groupindex.keys()
+                        pattern = mi.pattern
+                    else:
+                        # non regex masking instructions - support only non-exact matching
+                        mi_groups = []
+                        pattern = ".+?"
 
                     for group_name in mi_groups:
                         param_group_name = get_next_param_name()
