@@ -252,7 +252,7 @@ class TemplateMiner:
             allowed_patterns = []
             if exact_matching:
                 # get all possible regex patterns from masking instructions that match this mask name
-                masking_instructions = self.masker.instructions_by_mask_name(_mask_name) or []
+                masking_instructions = self.masker.instructions_by_mask_name(_mask_name)
                 for mi in masking_instructions:
                     # MaskingInstruction may already contain named groups.
                     # We replace group names in those named groups, to avoid conflicts due to duplicate names.
