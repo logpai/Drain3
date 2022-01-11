@@ -250,11 +250,12 @@ class TemplateMiner:
         # Create a named group with the respective patterns for the given mask-name.
         def create_capture_regex(_mask_name):
             allowed_patterns = []
-            if exact_matching and _mask_name in self.masker.mask_names:
-                for mi in self.masker.instructions_by_mask_name(_mask_name):
+            if exact_matching:
+                # get all possible regex patterns from masking instructions that match this mask name
+                masking_instructions = self.masker.instructions_by_mask_name(_mask_name) or []
+                for mi in masking_instructions:
                     # MaskingInstruction may already contain named groups.
-                    # We replace group names in those named groups,
-                    # to avoid conflicts due to duplicate names.
+                    # We replace group names in those named groups, to avoid conflicts due to duplicate names.
                     mi_groups = mi.regex.groupindex.keys()
                     pattern = mi.pattern
 
@@ -268,10 +269,14 @@ class TemplateMiner:
 
                         pattern = replace_captured_param_name("(?P={}")
                         pattern = replace_captured_param_name("(?P<{}>")
+
+                    # support unnamed back-references in masks (simple cases only)
                     pattern = re.sub(r"\\(?!0)\d{1,2}", r"(?:.+?)", pattern)
                     allowed_patterns.append(pattern)
-            if _mask_name == "*" or not exact_matching:
+
+            if not exact_matching or _mask_name == "*":
                 allowed_patterns.append(r".+?")
+
             # Give each capture group a unique name to avoid conflicts.
             param_group_name = get_next_param_name()
             param_group_name_to_mask_name[param_group_name] = _mask_name
@@ -282,10 +287,15 @@ class TemplateMiner:
         # For every mask in the template, replace it with a named group of all
         # possible masking-patterns it could represent (in order).
         mask_names = set(self.masker.mask_names)
+
+        # the Drain catch-all mask
         mask_names.add("*")
+
         escaped_prefix = re.escape(self.masker.mask_prefix)
         escaped_suffix = re.escape(self.masker.mask_suffix)
         template_regex = re.escape(log_template)
+
+        # replace each mask name with a proper regex that captures it
         for mask_name in mask_names:
             search_str = escaped_prefix + re.escape(mask_name) + escaped_suffix
             while True:
@@ -297,6 +307,7 @@ class TemplateMiner:
                     break
                 template_regex = template_regex_new
 
+        # match also messages with multiple spaces or other whitespace chars between tokens
         template_regex = re.sub(r"\\ ", r"\\s+", template_regex)
         template_regex = "^" + template_regex + "$"
         return template_regex, param_group_name_to_mask_name

@@ -6,7 +6,7 @@ License     : MIT
 """
 import abc
 import re
-from typing import Collection
+from typing import Collection, Optional
 
 
 class AbstractMaskingInstruction(abc.ABC):
@@ -66,8 +66,8 @@ class LogMasker:
     def mask_names(self) -> Collection[str]:
         return self.mask_name_to_instructions.keys()
 
-    def instructions_by_mask_name(self, mask_name: str) -> Collection[AbstractMaskingInstruction]:
-        return self.mask_name_to_instructions[mask_name]
+    def instructions_by_mask_name(self, mask_name: str) -> Optional[Collection[AbstractMaskingInstruction]]:
+        return self.mask_name_to_instructions.get(mask_name)
 
 # Some masking examples
 # ---------------------
