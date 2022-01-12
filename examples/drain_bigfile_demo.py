@@ -27,7 +27,7 @@ if not os.path.isfile(in_log_file):
 
 config = TemplateMinerConfig()
 config.load(dirname(__file__) + "/drain3.ini")
-config.profiling_enabled = False
+config.profiling_enabled = True
 template_miner = TemplateMiner(config=config)
 
 line_count = 0
