@@ -77,18 +77,19 @@ post: [Use open source Drain3 log-template mining project to monitor for network
 
 #### New features
 
-- **Persistence**. Save and load Drain state into an [Apache Kafka](https://kafka.apache.org)
+- [**Persistence**](#persistence). Save and load Drain state into an [Apache Kafka](https://kafka.apache.org)
   topic, [Redis](https://redis.io/) or a file.
 - **Streaming**. Support feeding Drain with messages one-be-one.
-- **Masking**. Replace some message parts (e.g numbers, IPs, emails) with wildcards. This improves the accuracy of
-  template mining.
-- **Packaging**. As a pip package.
-- **Memory efficiency**. Decrease the memory footprint of internal data structures and introduce cache to control max
-  memory consumed (thanks to @StanislawSwierc)
-- **Inference Mode**. In case you want to separate training and inference phase, Drain3 provides a function for *fast*
-  matching against already-learned clusters (templates) only, without the usage of regular expressions.
-- **Parameter extraction**. Accurate extraction of the variable parts from a log message as an ordered list, based on
-  its mined template and the defined masking instructions (thanks to @Impelon).
+- [**Masking**](#masking). Replace some message parts (e.g numbers, IPs, emails) with wildcards. This improves the
+  accuracy of template mining.
+- [**Packaging**](#installation). As a pip package.
+- [**Memory efficiency**](#memory-efficiency). Decrease the memory footprint of internal data structures and introduce
+  cache to control max memory consumed (thanks to @StanislawSwierc)
+- [**Inference mode**](#training-vs-inference-modes). In case you want to separate training and inference phase, Drain3
+  provides a function for *fast* matching against already-learned clusters (templates) only, without the usage of
+  regular expressions.
+- [**Parameter extraction**](#parameter-extraction). Accurate extraction of the variable parts from a log message as an
+  ordered list, based on its mined template and the defined masking instructions (thanks to @Impelon).
 
 #### Expected Input and Output
 
