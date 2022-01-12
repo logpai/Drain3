@@ -57,7 +57,7 @@ while True:
     result_json = json.dumps(result)
     print(result_json)
     template = result["template_mined"]
-    params = template_miner.get_parameter_list(template, log_line)
+    params = template_miner.extract_parameters(template, log_line)
     print("Parameters: " + str(params))
 
 print("Training done. Mined clusters:")

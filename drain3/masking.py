@@ -1,35 +1,73 @@
 """
-Description : This file implements the persist/restore from Kafka
+Description : This file implements the masking using user-provided patterns
 Author      : Moshik Hershcovitch
 Author_email: moshikh@il.ibm.com
 License     : MIT
 """
-import logging
+import abc
 import re
-from typing import List
-
-logger = logging.getLogger(__name__)
+from typing import Collection, Optional
 
 
-class MaskingInstruction:
-    def __init__(self, regex_pattern: str, mask_with: str):
-        self.regex_pattern = regex_pattern
+class AbstractMaskingInstruction(abc.ABC):
+
+    def __init__(self, mask_with: str):
         self.mask_with = mask_with
-        self.regex = re.compile(regex_pattern)
+
+    @abc.abstractmethod
+    def mask(self, content: str, mask_prefix: str, mask_suffix: str) -> str:
+        """
+        Mask content according to this instruction and return the result.
+
+        :param content: text to apply masking to
+        :param mask_prefix: the prefix of any masks inserted
+        :param mask_suffix: the suffix of any masks inserted
+        """
+        pass
 
 
-class RegexMasker:
-    def __init__(self, masking_instructions: List[MaskingInstruction], mask_prefix: str, mask_suffix: str):
+class MaskingInstruction(AbstractMaskingInstruction):
+
+    def __init__(self, pattern: str, mask_with: str):
+        super().__init__(mask_with)
+        self.regex = re.compile(pattern)
+
+    @property
+    def pattern(self):
+        return self.regex.pattern
+
+    def mask(self, content: str, mask_prefix: str, mask_suffix: str) -> str:
+        mask = mask_prefix + self.mask_with + mask_suffix
+        return self.regex.sub(mask, content)
+
+
+# Alias for `MaskingInstruction`.
+RegexMaskingInstruction = MaskingInstruction
+
+
+class LogMasker:
+
+    def __init__(self, masking_instructions: Collection[AbstractMaskingInstruction],
+                 mask_prefix: str, mask_suffix: str):
         self.mask_prefix = mask_prefix
         self.mask_suffix = mask_suffix
         self.masking_instructions = masking_instructions
-
-    def mask(self, content: str):
+        self.mask_name_to_instructions = {}
         for mi in self.masking_instructions:
-            # content = re.sub(mi.regex, mi.mask_with_wrapped, content)
-            content = mi.regex.sub(self.mask_prefix + mi.mask_with + self.mask_suffix, content)
+            self.mask_name_to_instructions.setdefault(mi.mask_with, [])
+            self.mask_name_to_instructions[mi.mask_with].append(mi)
+
+    def mask(self, content: str) -> str:
+        for mi in self.masking_instructions:
+            content = mi.mask(content, self.mask_prefix, self.mask_suffix)
         return content
 
+    @property
+    def mask_names(self) -> Collection[str]:
+        return self.mask_name_to_instructions.keys()
+
+    def instructions_by_mask_name(self, mask_name: str) -> Optional[Collection[AbstractMaskingInstruction]]:
+        return self.mask_name_to_instructions.get(mask_name) or []
 
 # Some masking examples
 # ---------------------
@@ -44,14 +82,3 @@ class RegexMasker:
 #    MaskingInstruction(r'((?<=[^A-Za-z0-9])|^)([\-\+]?\d+)((?=[^A-Za-z0-9])|$)', "NUM"),
 #    MaskingInstruction(r'(?<=executed cmd )(".+?")', "CMD"),
 # ]
-
-
-class LogMasker:
-    def __init__(self, masking_instructions: List[MaskingInstruction], mask_prefix: str, mask_suffix: str):
-        self.masker = RegexMasker(masking_instructions, mask_prefix, mask_suffix)
-
-    def mask(self, content: str):
-        if self.masker is not None:
-            return self.masker.mask(content)
-        else:
-            return content
