@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 from drain3.persistence_handler import PersistenceHandler
 
 

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 import unittest
 
 from drain3.masking import MaskingInstruction, LogMasker

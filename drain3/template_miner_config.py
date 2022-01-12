@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 import ast
 import configparser
 import json

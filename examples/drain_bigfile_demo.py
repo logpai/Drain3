@@ -1,9 +1,5 @@
-"""
-Description : Example of using Drain3 to process a real world file
-Author      : David Ohana
-Author_email: david.ohana@ibm.com
-License     : MIT
-"""
+# SPDX-License-Identifier: MIT
+
 import json
 import logging
 import os

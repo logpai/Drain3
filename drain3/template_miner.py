@@ -1,9 +1,5 @@
-"""
-Description : This file implements wrapper of the Drain core algorithm - add persistent and recovery
-Author      : David Ohana, Moshik Hershcovitch, Eran Raichstein
-Author_email: david.ohana@ibm.com, moshikh@il.ibm.com, eranra@il.ibm.com
-License     : MIT
-"""
+# SPDX-License-Identifier: MIT
+
 import base64
 import logging
 import re

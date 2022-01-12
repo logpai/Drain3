@@ -1,8 +1,6 @@
-"""
-Description : A section-based runtime profiler.
-Author      : david.ohana@ibm.com
-License     : Apache v2
-"""
+# SPDX-License-Identifier: Apache-2.0
+# Based on https://github.com/davidohana/SimpleProfiler/blob/main/python/simple_profiler.py
+
 import os
 import time
 

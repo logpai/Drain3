@@ -1,9 +1,7 @@
-"""
-Description : This file implements the Drain algorithm for log parsing
-Author      : LogPAI team
-Modified by : david.ohana@ibm.com, moshikh@il.ibm.com
-License     : MIT
-"""
+# SPDX-License-Identifier: MIT
+# This file implements the Drain algorithm for log parsing.
+# Based on https://github.com/logpai/logparser/blob/master/logparser/Drain/Drain.py by LogPAI team
+
 from collections import KeysView
 from typing import List, Dict, Sequence, Union
 

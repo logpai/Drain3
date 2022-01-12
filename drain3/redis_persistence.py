@@ -1,8 +1,4 @@
-"""
-Author      : Mauricio Tabares
-Author_email: matabares@netactica.com
-License     : MIT
-"""
+# SPDX-License-Identifier: MIT
 
 import redis
 

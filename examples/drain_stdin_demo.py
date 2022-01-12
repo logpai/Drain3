@@ -1,9 +1,5 @@
-"""
-Description : Example of using Drain3 with Kafka persistence
-Author      : David Ohana, Moshik Hershcovitch, Eran Raichstein
-Author_email: david.ohana@ibm.com, moshikh@il.ibm.com, eranra@il.ibm.com
-License     : MIT
-"""
+# SPDX-License-Identifier: MIT
+
 import json
 import logging
 import sys

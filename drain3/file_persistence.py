@@ -1,9 +1,4 @@
-"""
-Description : This file implements the persist/restore from file 
-Author      : Moshik Hershcovitch 
-Author_email: moshikh@il.ibm.com
-License     : MIT
-"""
+# SPDX-License-Identifier: MIT
 
 import os
 import pathlib

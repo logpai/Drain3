@@ -1,9 +1,5 @@
-"""
-Description : This file implements the masking using user-provided patterns
-Author      : Moshik Hershcovitch
-Author_email: moshikh@il.ibm.com
-License     : MIT
-"""
+# SPDX-License-Identifier: MIT
+
 import abc
 import re
 from typing import Collection, Optional
