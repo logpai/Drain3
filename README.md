@@ -244,7 +244,14 @@ result = template_miner.add_log_message(log_line)
 params = template_miner.extract_parameters(result["template_mined"], log_line, exact_matching=True)
 ```
 
-For the input `"user johndoe logged in 11 minuts ago"`, the template would be `"user <:*:> logged in <:NUM:> minuts ago"` and the extracted parameters:  
+For the input `"user johndoe logged in 11 minuts ago"`, the template would be: 
+
+```
+"user <:*:> logged in <:NUM:> minuts ago"
+```
+
+... and the extracted parameters:
+
 ```
 [
   ExtractedParameter(value='johndoe', mask_name='*'), 
