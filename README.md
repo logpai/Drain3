@@ -83,7 +83,7 @@ post: [Use open source Drain3 log-template mining project to monitor for network
 - [**Masking**](#masking). Replace some message parts (e.g numbers, IPs, emails) with wildcards. This improves the
   accuracy of template mining.
 - [**Packaging**](#installation). As a pip package.
-- [**Configuration**](#configuration) Support for configuring Drain3 using an `.ini` file or a configuration object. 
+- [**Configuration**](#configuration). Support for configuring Drain3 using an `.ini` file or a configuration object. 
 - [**Memory efficiency**](#memory-efficiency). Decrease the memory footprint of internal data structures and introduce
   cache to control max memory consumed (thanks to @StanislawSwierc)
 - [**Inference mode**](#training-vs-inference-modes). In case you want to separate training and inference phase, Drain3

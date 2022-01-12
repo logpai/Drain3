@@ -11,7 +11,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 setup(
     name='drain3',
     packages=['drain3'],
-    version="0.9.8",
+    version="0.9.9",
     license='MIT',
     description="Persistent & streaming log template miner",
     long_description=long_description,
