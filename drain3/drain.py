@@ -2,8 +2,7 @@
 # This file implements the Drain algorithm for log parsing.
 # Based on https://github.com/logpai/logparser/blob/master/logparser/Drain/Drain.py by LogPAI team
 
-from collections import KeysView
-from typing import List, Dict, Sequence, Union
+from typing import List, Dict, Sequence
 
 from cachetools import LRUCache, Cache
 
@@ -233,7 +232,7 @@ class Drain:
 
         return ret_val, param_count
 
-    def fast_match(self, cluster_ids: Union[Sequence, KeysView], tokens: list, sim_th: float, include_params: bool):
+    def fast_match(self, cluster_ids: Sequence, tokens: list, sim_th: float, include_params: bool):
         """
         Find the best match for a log message (represented as tokens) versus a list of clusters
         :param cluster_ids: List of clusters to match against (represented by their IDs)
