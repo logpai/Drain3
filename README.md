@@ -348,6 +348,10 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 
 ## Change Log
 
+##### v0.9.10
+
+* Fixed compatibility issue with Python 3.10 caused by removal of `KeysView`.
+
 ##### v0.9.9
 
 * Added support for accurate log message parameter extraction in a new function - `extract_parameters()`. The
