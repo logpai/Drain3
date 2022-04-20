@@ -44,6 +44,7 @@ config.profiling_enabled = False
 
 template_miner = TemplateMiner(persistence, config)
 print(f"Drain3 started with '{persistence_type}' persistence")
+print(f"{len(config.masking_instructions)} masking instructions are in use")
 print(f"Starting training mode. Reading from std-in ('q' to finish)")
 while True:
     log_line = input("> ")
