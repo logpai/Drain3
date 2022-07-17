@@ -83,7 +83,7 @@ class SimpleProfiler(Profiler):
             raise ValueError(f"Section {section_name} was not started")
 
         took_sec = now - section.start_time_sec
-        if self.reset_after_sample_count > 0 and section.sample_count == self.reset_after_sample_count:
+        if 0 < self.reset_after_sample_count == section.sample_count:
             section.sample_count_batch = 0
             section.total_time_sec_batch = 0
 
@@ -132,11 +132,18 @@ class ProfiledSectionStats:
             took_sec_text += f" ({100 * self.total_time_sec / enclosing_time_sec:>6.2f}%)"
 
         ms_per_k_samples = f"{1000000 * self.total_time_sec / self.sample_count: 7.2f}"
-        samples_per_sec = f"{self.sample_count / self.total_time_sec: 15,.2f}"
+
+        if self.total_time_sec > 0:
+            samples_per_sec = f"{self.sample_count / self.total_time_sec: 15,.2f}"
+        else:
+            samples_per_sec = "N/A"
 
         if include_batch_rates:
             ms_per_k_samples += f" ({1000000 * self.total_time_sec_batch / self.sample_count_batch: 7.2f})"
-            samples_per_sec += f" ({self.sample_count_batch / self.total_time_sec_batch: 15,.2f})"
+            if self.total_time_sec_batch > 0:
+                samples_per_sec += f" ({self.sample_count_batch / self.total_time_sec_batch: 15,.2f})"
+            else:
+                samples_per_sec += " (N/A)"
 
         return f"{self.section_name: <15}: took {took_sec_text}, " \
                f"{self.sample_count: >10,} samples, " \
