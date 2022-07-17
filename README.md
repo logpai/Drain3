@@ -348,6 +348,10 @@ Our project welcomes external contributions. Please refer to [CONTRIBUTING.md](C
 
 ## Change Log
 
+##### v0.9.11
+
+* Fixed possible DivideByZero error when the profiler is enabled - [Issue #65](https://github.com/IBM/Drain3/issues/65). 
+
 ##### v0.9.10
 
 * Fixed compatibility issue with Python 3.10 caused by removal of `KeysView`.
