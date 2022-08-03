@@ -60,7 +60,7 @@ class Drain:
                  param_str="<*>",
                  parametrize_numeric_tokens=True):
         """
-        Create a new Drain instance.创建一个新的Drain实例。
+        Create a new Drain instance.
 
         :param depth: max depth levels of log clusters. Minimum is 2.
             For example, for depth==4, Root is considered depth level 1.
@@ -164,13 +164,10 @@ class Drain:
             if current_depth >= self.max_node_depth or current_depth >= token_count:
                 # clean up stale clusters before adding a new one.
                 new_cluster_ids = []
-                # 填补new_cluster_ids为现在这个分支中的所有cluster_id
                 for cluster_id in cur_node.cluster_ids:
                     if cluster_id in self.id_to_cluster:
                         new_cluster_ids.append(cluster_id)
-                # 将新的cluster_id添加到cur_node.cluster_ids中
                 new_cluster_ids.append(cluster.cluster_id)
-                # 更新cur_node.cluster_ids
                 cur_node.cluster_ids = new_cluster_ids
                 break
 
@@ -178,7 +175,6 @@ class Drain:
             if token not in cur_node.key_to_child_node:
                 if self.parametrize_numeric_tokens and self.has_numbers(token):
                     if self.param_str not in cur_node.key_to_child_node:
-                        # 添加新的一层节点，并下钻一层
                         new_node = Node()
                         cur_node.key_to_child_node[self.param_str] = new_node
                         cur_node = new_node
