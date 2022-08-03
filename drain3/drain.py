@@ -423,6 +423,7 @@ class Drain:
 
 class JaccardDrain(Drain):
     """
+    add a new matching pattern to the log cluster.
     Cancels log message length as  first token.
     Drain that uses Jaccard similarity to match log messages.
     """
