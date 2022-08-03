@@ -248,8 +248,8 @@ class Drain:
         max_cluster = None
 
         for cluster_id in cluster_ids:
-            # Try to retrieve cluster from cache with bypassing eviction尝试从缓存中检索集群，绕过退出
-            # algorithm as we are only testing candidates for a match.#算法，因为我们只测试匹配的候选人。
+            # Try to retrieve cluster from cache with bypassing eviction
+            # algorithm as we are only testing candidates for a match.
             cluster = self.id_to_cluster.get(cluster_id)
             if cluster is None:
                 continue
