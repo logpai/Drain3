@@ -53,22 +53,10 @@ class TemplateMiner:
         param_str = self.config.mask_prefix + "*" + self.config.mask_suffix
 
         # Follow the configuration in the configuration file to instantiate Drain
-        target_obj = self.config.matched_pattern
+        # target_obj will be "Drain" if the engine argument is not specified.
+        target_obj = self.config.engine
         if target_obj not in ["Drain","JaccardDrain"]:
             raise ValueError(f"Invalid matched_pattern: {target_obj}, must be either 'Drain' or 'JaccardDrain'")
-
-        '''
-        self.drain = JaccardDrain(
-            sim_th=self.config.drain_sim_th,
-            depth=self.config.drain_depth,
-            max_children=self.config.drain_max_children,
-            max_clusters=self.config.drain_max_clusters,
-            extra_delimiters=self.config.drain_extra_delimiters,
-            profiler=self.profiler,
-            param_str=param_str,
-            parametrize_numeric_tokens=self.config.parametrize_numeric_tokens
-        )
-        '''
 
         self.drain = globals()[target_obj](
             sim_th=self.config.drain_sim_th,

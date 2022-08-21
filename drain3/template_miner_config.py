@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class TemplateMinerConfig:
     def __init__(self):
-        self.matched_pattern = "Drain"
+        self.engine = "Drain"
         self.profiling_enabled = False
         self.profiling_report_sec = 60
         self.snapshot_interval_minutes = 5
@@ -39,7 +39,7 @@ class TemplateMinerConfig:
         section_drain = 'DRAIN'
         section_masking = 'MASKING'
 
-        self.matched_pattern = parser.get(section_drain, 'matched_pattern', fallback=self.matched_pattern)
+        self.engine = parser.get(section_drain, 'engine', fallback=self.engine)
 
         self.profiling_enabled = parser.getboolean(section_profiling, 'enabled',
                                                    fallback=self.profiling_enabled)
