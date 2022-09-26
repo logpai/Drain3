@@ -2,7 +2,7 @@
 
 ## Important Update
 
-Drain3 was moved to the `logpai` GitHub organization (which is also the home for the original Drain implementation). We are looking for an active/lead maintainer(s) for this project. Until a maintainer is found, Drain3 will be maintained on a best-effort basis. Please write to davidoha@gmail.com or eran.raichstein@gmail.com if you would like to join us.
+Drain3 was moved to the `logpai` GitHub organization (which is also the home for the original Drain implementation). We always welcome more contributors and maintainers to join us and push the project forward. We welcome more contributions and variants of implementations if you find practical enhancements to the algorithm in production scenarios.
 
 ## Introduction
 
