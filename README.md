@@ -1,5 +1,9 @@
 # Drain3
 
+## Important Update
+
+Drain3 was moved to the `logpai` GitHub organization (which is also the home for the original Drain implementation). We always welcome more contributors and maintainers to join us and push the project forward. We welcome more contributions and variants of implementations if you find practical enhancements to the algorithm in production scenarios.
+
 ## Introduction
 
 Drain3 is an online log template miner that can extract templates (clusters) from a stream of log messages in a timely
