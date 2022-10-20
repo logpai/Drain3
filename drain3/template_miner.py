@@ -10,7 +10,8 @@ from typing import Optional, List, NamedTuple
 import jsonpickle
 from cachetools import LRUCache, cachedmethod
 
-from drain3.drain import Drain, LogCluster, JaccardDrain
+from drain3.drain import Drain, LogCluster
+from drain3.jaccard_drain import JaccardDrain
 from drain3.masking import LogMasker
 from drain3.persistence_handler import PersistenceHandler
 from drain3.simple_profiler import SimpleProfiler, NullProfiler, Profiler
