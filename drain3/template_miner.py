@@ -11,10 +11,12 @@ import jsonpickle
 from cachetools import LRUCache, cachedmethod
 
 from drain3.drain import Drain, LogCluster
+from drain3.jaccard_drain import JaccardDrain
 from drain3.masking import LogMasker
 from drain3.persistence_handler import PersistenceHandler
 from drain3.simple_profiler import SimpleProfiler, NullProfiler, Profiler
 from drain3.template_miner_config import TemplateMinerConfig
+
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +32,6 @@ class TemplateMiner:
                  config: TemplateMinerConfig = None):
         """
         Wrapper for Drain with persistence and masking support
-
         :param persistence_handler: The type of persistence to use. When None, no persistence is applied.
         :param config: Configuration object. When none, configuration is loaded from default .ini file (if exist)
         """
@@ -44,13 +45,21 @@ class TemplateMiner:
         self.config = config
 
         self.profiler: Profiler = NullProfiler()
+
         if self.config.profiling_enabled:
             self.profiler = SimpleProfiler()
 
         self.persistence_handler = persistence_handler
 
         param_str = self.config.mask_prefix + "*" + self.config.mask_suffix
-        self.drain = Drain(
+
+        # Follow the configuration in the configuration file to instantiate Drain
+        # target_obj will be "Drain" if the engine argument is not specified.
+        target_obj = self.config.engine
+        if target_obj not in ["Drain","JaccardDrain"]:
+            raise ValueError(f"Invalid matched_pattern: {target_obj}, must be either 'Drain' or 'JaccardDrain'")
+
+        self.drain = globals()[target_obj](
             sim_th=self.config.drain_sim_th,
             depth=self.config.drain_depth,
             max_children=self.config.drain_max_children,
@@ -60,9 +69,11 @@ class TemplateMiner:
             param_str=param_str,
             parametrize_numeric_tokens=self.config.parametrize_numeric_tokens
         )
+
         self.masker = LogMasker(self.config.masking_instructions, self.config.mask_prefix, self.config.mask_suffix)
         self.parameter_extraction_cache = LRUCache(self.config.parameter_extraction_cache_capacity)
         self.last_save_time = time.time()
+
         if persistence_handler is not None:
             self.load_state()
 

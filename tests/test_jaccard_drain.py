@@ -2,13 +2,14 @@
 
 import unittest
 
-from drain3.drain import Drain, LogCluster
+from drain3.drain import LogCluster
+from drain3.jaccard_drain import JaccardDrain
 
 
 class DrainTest(unittest.TestCase):
 
     def test_add_shorter_than_depth_message(self):
-        model = Drain(depth=4)
+        model = JaccardDrain(depth=4)
         res = model.add_log_message("hello")
         print(res[1])
         print(res[0])
@@ -27,7 +28,7 @@ class DrainTest(unittest.TestCase):
         self.assertEqual(2, len(model.id_to_cluster))
 
     def test_add_log_message(self):
-        model = Drain()
+        model = JaccardDrain()
         entries = str.splitlines(
             """
             Dec 10 07:07:38 LabSZ sshd[24206]: input_userauth_request: invalid user test9 [preauth]
@@ -64,7 +65,7 @@ class DrainTest(unittest.TestCase):
         less aggressive in grouping entries into clusters. In particular, it
         only finds clusters for "Failed password" entries.
         """
-        model = Drain(
+        model = JaccardDrain(
             depth=4,
             sim_th=0.75,
             max_children=100,
@@ -100,14 +101,14 @@ class DrainTest(unittest.TestCase):
 
     def test_max_clusters(self):
         """Verify model respects the max_clusters option.
-        
+
         Key difference between this and other tests is that with `max_clusters`
         set to 1 model is capable of keeping track of a single cluster at a
         time. Consequently, when log stream switched form the A format to the B
         and back model doesn't recognize it and returnes a new template with no
         slots.
         """
-        model = Drain(max_clusters=1)
+        model = JaccardDrain(max_clusters=1)
         entries = str.splitlines(
             """
             A format 1
@@ -140,7 +141,7 @@ class DrainTest(unittest.TestCase):
         clusters is reached, then clusters are removed according to the lru
         policy.
         """
-        model = Drain(max_clusters=2, depth=4, param_str="*")  # sim_th=0.75
+        model = JaccardDrain(max_clusters=2, depth=4, param_str="*")  # sim_th=0.75
         entries = [
             "A A A",
             "A A B",
@@ -179,6 +180,7 @@ class DrainTest(unittest.TestCase):
         for entry in entries:
             cluster, _ = model.add_log_message(entry)
             actual.append(cluster.get_template())
+            print(cluster.get_template())
 
         self.assertListEqual(list(map(str.strip, expected)), actual)
         self.assertEqual(4, model.get_total_cluster_size())
@@ -188,7 +190,7 @@ class DrainTest(unittest.TestCase):
         clusters is reached, then clusters are removed according to the lru
         policy.
         """
-        model = Drain(max_clusters=2, depth=4, param_str="*")
+        model = JaccardDrain(max_clusters=2, depth=4, param_str="*")
         entries = [
             "A A A",
             "A A B",
@@ -232,7 +234,7 @@ class DrainTest(unittest.TestCase):
         # self.assertEqual(5, model.get_total_cluster_size())
 
     def test_match_only(self):
-        model = Drain()
+        model = JaccardDrain()
         res = model.add_log_message("aa aa aa")
         print(res[0])
 
@@ -257,3 +259,32 @@ class DrainTest(unittest.TestCase):
         c: LogCluster = model.match("nothing")
         self.assertIsNone(c)
 
+    def test_match_token_with_different_length(self):
+        model = JaccardDrain()
+        res = model.add_log_message("check pass; user unknown")
+        print(res[0])
+
+        res = model.add_log_message("check pass; user Lisa")
+        print(res[0])
+
+        res = model.add_log_message("check pass; user li Sa")
+        print(res[0])
+
+        res = model.add_log_message("session opened for user cyrus by (uid=0)")
+        print(res[0])
+
+        res = model.add_log_message("session closed for user cyrus")
+        print(res[0])
+
+        c: LogCluster = model.match("check pass; user boris")
+        self.assertEqual(1, c.cluster_id)
+
+        c: LogCluster = model.match("session opened for user cyrus by (uid=1)")
+        self.assertEqual(2, c.cluster_id)
+
+        c: LogCluster = model.match("nothing")
+        self.assertIsNone(c)
+
+
+if __name__ == "__main__":
+    pass

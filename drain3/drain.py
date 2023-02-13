@@ -49,7 +49,7 @@ class Node:
         self.cluster_ids: List[int] = []
 
 
-class Drain:
+class DrainBase:
     def __init__(self,
                  depth=4,
                  sim_th=0.4,
@@ -102,6 +102,144 @@ class Drain:
     @staticmethod
     def has_numbers(s):
         return any(char.isdigit() for char in s)
+
+    def fast_match(self, cluster_ids: Sequence, tokens: list, sim_th: float, include_params: bool):
+        """
+        Find the best match for a log message (represented as tokens) versus a list of clusters
+        :param cluster_ids: List of clusters to match against (represented by their IDs)
+        :param tokens: the log message, separated to tokens.
+        :param sim_th: minimum required similarity threshold (None will be returned in no clusters reached it)
+        :param include_params: consider tokens matched to wildcard parameters in similarity threshold.
+        :return: Best match cluster or None
+        """
+        match_cluster = None
+
+        max_sim = -1
+        max_param_count = -1
+        max_cluster = None
+
+        for cluster_id in cluster_ids:
+            # Try to retrieve cluster from cache with bypassing eviction
+            # algorithm as we are only testing candidates for a match.
+            cluster = self.id_to_cluster.get(cluster_id)
+            if cluster is None:
+                continue
+            cur_sim, param_count = self.get_seq_distance(cluster.log_template_tokens, tokens, include_params)
+            if cur_sim > max_sim or (cur_sim == max_sim and param_count > max_param_count):
+                max_sim = cur_sim
+                max_param_count = param_count
+                max_cluster = cluster
+
+        if max_sim >= sim_th:
+            match_cluster = max_cluster
+
+        return match_cluster
+
+    def print_tree(self, file=None, max_clusters=5):
+        self.print_node("root", self.root_node, 0, file, max_clusters)
+
+    def print_node(self, token, node, depth, file, max_clusters):
+        out_str = '\t' * depth
+
+        if depth == 0:
+            out_str += f'<{token}>'
+        elif depth == 1:
+            if token.isdigit():
+                out_str += f'<L={token}>'
+            else:
+                out_str += f'<{token}>'
+        else:
+            out_str += f'"{token}"'
+
+        if len(node.cluster_ids) > 0:
+            out_str += f" (cluster_count={len(node.cluster_ids)})"
+
+        print(out_str, file=file)
+
+        for token, child in node.key_to_child_node.items():
+            self.print_node(token, child, depth + 1, file, max_clusters)
+
+        for cid in node.cluster_ids[:max_clusters]:
+            cluster = self.id_to_cluster[cid]
+            out_str = '\t' * (depth + 1) + str(cluster)
+            print(out_str, file=file)
+
+    def get_content_as_tokens(self, content):
+        content = content.strip()
+        for delimiter in self.extra_delimiters:
+            content = content.replace(delimiter, " ")
+        content_tokens = content.split()
+        return content_tokens
+
+    def add_log_message(self, content: str):
+        content_tokens = self.get_content_as_tokens(content)
+
+        if self.profiler:
+            self.profiler.start_section("tree_search")
+        match_cluster = self.tree_search(self.root_node, content_tokens, self.sim_th, False)
+        if self.profiler:
+            self.profiler.end_section()
+
+        # Match no existing log cluster
+        if match_cluster is None:
+            if self.profiler:
+                self.profiler.start_section("create_cluster")
+            self.clusters_counter += 1
+            cluster_id = self.clusters_counter
+            match_cluster = LogCluster(content_tokens, cluster_id)
+            self.id_to_cluster[cluster_id] = match_cluster
+            self.add_seq_to_prefix_tree(self.root_node, match_cluster)
+            update_type = "cluster_created"
+
+        # Add the new log message to the existing cluster
+        else:
+            if self.profiler:
+                self.profiler.start_section("cluster_exist")
+            new_template_tokens = self.create_template(content_tokens, match_cluster.log_template_tokens)
+            if tuple(new_template_tokens) == match_cluster.log_template_tokens:
+                update_type = "none"
+            else:
+                match_cluster.log_template_tokens = tuple(new_template_tokens)
+                update_type = "cluster_template_changed"
+            match_cluster.size += 1
+            # Touch cluster to update its state in the cache.
+            # noinspection PyStatementEffect
+            self.id_to_cluster[match_cluster.cluster_id]
+
+        if self.profiler:
+            self.profiler.end_section()
+
+        return match_cluster, update_type
+
+    def get_total_cluster_size(self):
+        size = 0
+        for c in self.id_to_cluster.values():
+            size += c.size
+        return size
+
+    def get_clusters_ids_for_seq_len(self, seq_fir):
+        """
+        seq_fir: int/str - the first token of the sequence
+        Return all clusters with the specified count of tokens
+        """
+
+        def append_clusters_recursive(node: Node, id_list_to_fill: list):
+            id_list_to_fill.extend(node.cluster_ids)
+            for child_node in node.key_to_child_node.values():
+                append_clusters_recursive(child_node, id_list_to_fill)
+
+        cur_node = self.root_node.key_to_child_node.get(str(seq_fir))
+
+        # no template with same token count
+        if cur_node is None:
+            return []
+
+        target = []
+        append_clusters_recursive(cur_node, target)
+        return target
+
+
+class Drain(DrainBase):
 
     def tree_search(self, root_node: Node, tokens: list, sim_th: float, include_params: bool):
 
@@ -232,38 +370,6 @@ class Drain:
 
         return ret_val, param_count
 
-    def fast_match(self, cluster_ids: Sequence, tokens: list, sim_th: float, include_params: bool):
-        """
-        Find the best match for a log message (represented as tokens) versus a list of clusters
-        :param cluster_ids: List of clusters to match against (represented by their IDs)
-        :param tokens: the log message, separated to tokens.
-        :param sim_th: minimum required similarity threshold (None will be returned in no clusters reached it)
-        :param include_params: consider tokens matched to wildcard parameters in similarity threshold.
-        :return: Best match cluster or None
-        """
-        match_cluster = None
-
-        max_sim = -1
-        max_param_count = -1
-        max_cluster = None
-
-        for cluster_id in cluster_ids:
-            # Try to retrieve cluster from cache with bypassing eviction
-            # algorithm as we are only testing candidates for a match.
-            cluster = self.id_to_cluster.get(cluster_id)
-            if cluster is None:
-                continue
-            cur_sim, param_count = self.get_seq_distance(cluster.log_template_tokens, tokens, include_params)
-            if cur_sim > max_sim or (cur_sim == max_sim and param_count > max_param_count):
-                max_sim = cur_sim
-                max_param_count = param_count
-                max_cluster = cluster
-
-        if max_sim >= sim_th:
-            match_cluster = max_cluster
-
-        return match_cluster
-
     def create_template(self, seq1, seq2):
         assert len(seq1) == len(seq2)
         ret_val = list(seq2)
@@ -273,99 +379,6 @@ class Drain:
                 ret_val[i] = self.param_str
 
         return ret_val
-
-    def print_tree(self, file=None, max_clusters=5):
-        self.print_node("root", self.root_node, 0, file, max_clusters)
-
-    def print_node(self, token, node, depth, file, max_clusters):
-        out_str = '\t' * depth
-
-        if depth == 0:
-            out_str += f'<{token}>'
-        elif depth == 1:
-            out_str += f'<L={token}>'
-        else:
-            out_str += f'"{token}"'
-
-        if len(node.cluster_ids) > 0:
-            out_str += f" (cluster_count={len(node.cluster_ids)})"
-
-        print(out_str, file=file)
-
-        for token, child in node.key_to_child_node.items():
-            self.print_node(token, child, depth + 1, file, max_clusters)
-
-        for cid in node.cluster_ids[:max_clusters]:
-            cluster = self.id_to_cluster[cid]
-            out_str = '\t' * (depth + 1) + str(cluster)
-            print(out_str, file=file)
-
-    def get_content_as_tokens(self, content):
-        content = content.strip()
-        for delimiter in self.extra_delimiters:
-            content = content.replace(delimiter, " ")
-        content_tokens = content.split()
-        return content_tokens
-
-    def add_log_message(self, content: str):
-        content_tokens = self.get_content_as_tokens(content)
-
-        if self.profiler:
-            self.profiler.start_section("tree_search")
-        match_cluster = self.tree_search(self.root_node, content_tokens, self.sim_th, False)
-        if self.profiler:
-            self.profiler.end_section()
-
-        # Match no existing log cluster
-        if match_cluster is None:
-            if self.profiler:
-                self.profiler.start_section("create_cluster")
-            self.clusters_counter += 1
-            cluster_id = self.clusters_counter
-            match_cluster = LogCluster(content_tokens, cluster_id)
-            self.id_to_cluster[cluster_id] = match_cluster
-            self.add_seq_to_prefix_tree(self.root_node, match_cluster)
-            update_type = "cluster_created"
-
-        # Add the new log message to the existing cluster
-        else:
-            if self.profiler:
-                self.profiler.start_section("cluster_exist")
-            new_template_tokens = self.create_template(content_tokens, match_cluster.log_template_tokens)
-            if tuple(new_template_tokens) == match_cluster.log_template_tokens:
-                update_type = "none"
-            else:
-                match_cluster.log_template_tokens = tuple(new_template_tokens)
-                update_type = "cluster_template_changed"
-            match_cluster.size += 1
-            # Touch cluster to update its state in the cache.
-            # noinspection PyStatementEffect
-            self.id_to_cluster[match_cluster.cluster_id]
-
-        if self.profiler:
-            self.profiler.end_section()
-
-        return match_cluster, update_type
-
-    def get_clusters_ids_for_seq_len(self, seq_len: int):
-        """
-        Return all clusters with the specified count of tokens
-        """
-
-        def append_clusters_recursive(node: Node, id_list_to_fill: list):
-            id_list_to_fill.extend(node.cluster_ids)
-            for child_node in node.key_to_child_node.values():
-                append_clusters_recursive(child_node, id_list_to_fill)
-
-        cur_node = self.root_node.key_to_child_node.get(str(seq_len))
-
-        # no template with same token count
-        if cur_node is None:
-            return []
-
-        target = []
-        append_clusters_recursive(cur_node, target)
-        return target
 
     def match(self, content: str, full_search_strategy="never"):
         """
@@ -413,9 +426,3 @@ class Drain:
             return None
 
         return full_search()
-
-    def get_total_cluster_size(self):
-        size = 0
-        for c in self.id_to_cluster.values():
-            size += c.size
-        return size
