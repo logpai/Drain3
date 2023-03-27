@@ -26,7 +26,7 @@ setup(
     ],
     extras_require={
         "kafka": ['kafka-python==2.0.1'],
-        "redis": ['redis==3.5.3'],
+        "redis": ['redis==4.5.3'],
     },
     classifiers=[
         "Programming Language :: Python :: 3.6",
