@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: '0 18 * * *'
+
+concurrency:
+  group: CI-tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    # Check if any file related to Drain3/ CI behavior is changed
+    # set outputs for other jobs to access for if conditions
+    name: Check Changes
+    runs-on: ubuntu-latest
+    # To prevent error when there's no base branch
+    if: github.event_name != 'schedule'
+    timeout-minutes: 10
+    outputs:
+      drain3: ${{ steps.filter.outputs.drain3 }}
+    steps:
+      - uses: actions/checkout@v3  # required for push event
+      - name: Check for file changes
+        uses: getsentry/paths-filter@v2.11.1
+        id: filter
+        with:
+          token: ${{ github.token }}
+          # The following filters indicate a category along with
+          # the files that should not be ignored by CI when modified.
+          filters: |
+            drain3:
+              - '.github/**/*.yaml'
+              - '**/*.py'
+              - '**/Dockerfile*'
+              - '**/Makefile'
+              - 'tests/**'
+              - '**/*.bat'
+              - '**/*.sh'
+              - '**/*.ps1'
+              - '**/pyproject.toml'
+              - '**/poetry.lock'
+              - '**/*.cfg'
+              - '**/*.ini'
+          list-files: json  # logs matched files
+  build:
+    runs-on: ubuntu-latest
+    needs: [changes]
+    if: |
+      ( always() && ! cancelled() ) &&
+      ((github.event_name == 'schedule' && github.repository == 'logpai/drain3') || needs.changes.outputs.drain3 == 'true')
+    
+    strategy:
+      matrix:
+        python-version: [ "3.7", "3.8", "3.9", "3.10", "3.11" ]
+      fail-fast: false
+    env:
+      PYTHON_VERSION: ${{ matrix.python-version }}
+    
+    steps:
+    - name: Check out Drain3 codebase
+      uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Setup Poetry
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade poetry
+
+    - name: Install dependencies
+      run:  poetry install
+
+    - name: Test with unittest
+      run: poetry run python -m unittest discover --verbose --start-directory tests

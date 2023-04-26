@@ -1,0 +1,57 @@
+[tool.poetry]
+name = "drain3"
+version = "0.9.11"
+description = "Persistent & streaming log template miner"
+authors = ["IBM Research Haifa <david.ohana@ibm.com>"]
+maintainers = ["Yihao Chen(Superskyyy) <yihaochen@apache.org>"]
+readme = "README.md"
+license = "MIT"
+keywords=['drain', 'log', 'parser', 'IBM', 'template', 'logs', 'miner']
+
+classifiers=[
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    'Topic :: System :: Monitoring',
+    "Topic :: Software Development :: Libraries",
+]
+
+packages = [
+    { include = "drain3" },
+]
+
+exclude = ['tests', 'examples']
+
+[tool.poetry.build]
+generate-setup-file = true
+
+
+[tool.poetry.dependencies]
+python = "^3.7"
+jsonpickle = "*"
+cachetools = "*"
+redis = { version = "*", optional = true }
+kafka-python = { version = "*", optional = true }
+
+[tool.poetry.extras]
+all=[
+    'redis',
+    'kafka-python',
+]
+kafka= [
+    'kafka-python',
+]
+redis=[
+    'redis',
+]
+
+[tool.poetry.group.dev.dependencies]
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
