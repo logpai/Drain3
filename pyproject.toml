@@ -2,6 +2,7 @@
 name = "drain3"
 version = "0.9.11"
 description = "Persistent & streaming log template miner"
+authors = ["Drain3"]
 license = "MIT"
 readme = "README.md"
 
