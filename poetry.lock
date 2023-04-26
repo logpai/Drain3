@@ -5,7 +5,7 @@ name = "async-timeout"
 version = "4.0.2"
 description = "Timeout context manager for asyncio programs"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "async-timeout-4.0.2.tar.gz", hash = "sha256:2163e1640ddb52b7a8c80d0a67a08587e5d245cc9c553a74a847056bc2976b15"},
@@ -73,7 +73,7 @@ name = "kafka-python"
 version = "2.0.2"
 description = "Pure Python client for Apache Kafka"
 category = "main"
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "kafka-python-2.0.2.tar.gz", hash = "sha256:04dfe7fea2b63726cd6f3e79a2d86e709d608d74406638c5da33a01d45a9d7e3"},
@@ -88,7 +88,7 @@ name = "redis"
 version = "4.5.4"
 description = "Python client for Redis database and key-value store"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "redis-4.5.4-py3-none-any.whl", hash = "sha256:2c19e6767c474f2e85167909061d525ed65bea9301c0770bb151e041b7ac89a2"},
@@ -132,7 +132,12 @@ files = [
 docs = ["furo", "jaraco.packaging (>=9)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
 testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.3)", "pytest-flake8", "pytest-mypy (>=0.9.1)"]
 
+[extras]
+all = ["kafka-python", "redis"]
+kafka = ["kafka-python"]
+redis = ["redis"]
+
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7"
-content-hash = "c9cd7fa06e4a9aa6df05494d5febf8463b1566bd003cb183e08a4a72df50c5f3"
+content-hash = "cb23187de36e9666c5f83118b9756f3b0a8c1cf272739a502d9a3fa68f851fe3"
