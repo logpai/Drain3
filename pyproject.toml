@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "drain3"
+version = "0.9.11"
+description = "Persistent & streaming log template miner"
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+jsonpickle = "*"
+kafka-python = "*"
+redis = "*"
+cachetools = "*"
+
+
+[tool.poetry.group.dev.dependencies]
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
