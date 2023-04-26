@@ -2,7 +2,7 @@
 name = "drain3"
 version = "0.9.11"
 description = "Persistent & streaming log template miner"
-authors = ["IBM Research Haifa (david.ohana@ibm.com)"]
+authors = ["IBM Research Haifa <david.ohana@ibm.com>"]
 maintainers = ["Yihao Chen(Superskyyy) <yihaochen@apache.org>"]
 readme = "README.md"
 license = "MIT"
