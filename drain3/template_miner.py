@@ -104,8 +104,8 @@ class TemplateMiner:
         self.drain.clusters_counter = loaded_drain.clusters_counter
         self.drain.root_node = loaded_drain.root_node
 
-        logger.info("Restored {0} clusters built from {1} messages".format(
-            len(loaded_drain.clusters), loaded_drain.get_total_cluster_size()))
+        logger.info(f"Restored {len(loaded_drain.clusters)} clusters "
+                    f"built from {loaded_drain.get_total_cluster_size()} messages")
 
     def save_state(self, snapshot_reason):
         state = jsonpickle.dumps(self.drain, keys=True).encode('utf-8')
