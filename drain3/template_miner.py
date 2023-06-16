@@ -56,7 +56,7 @@ class TemplateMiner:
         # Follow the configuration in the configuration file to instantiate Drain
         # target_obj will be "Drain" if the engine argument is not specified.
         target_obj = self.config.engine
-        if target_obj not in ["Drain","JaccardDrain"]:
+        if target_obj not in ["Drain", "JaccardDrain"]:
             raise ValueError(f"Invalid matched_pattern: {target_obj}, must be either 'Drain' or 'JaccardDrain'")
 
         self.drain = globals()[target_obj](
@@ -246,7 +246,7 @@ class TemplateMiner:
 
     @cachedmethod(lambda self: self.parameter_extraction_cache)
     def _get_template_parameter_extraction_regex(self, log_template: str, exact_matching: bool):
-        param_group_name_to_mask_name = dict()
+        param_group_name_to_mask_name = {}
         param_name_counter = [0]
 
         def get_next_param_name():
