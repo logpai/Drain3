@@ -51,7 +51,7 @@ class TemplateMiner:
 
         self.persistence_handler = persistence_handler
 
-        param_str = self.config.mask_prefix + "*" + self.config.mask_suffix
+        param_str = f"{self.config.mask_prefix}*{self.config.mask_suffix}"
 
         # Follow the configuration in the configuration file to instantiate Drain
         # target_obj will be "Drain" if the engine argument is not specified.
@@ -119,7 +119,7 @@ class TemplateMiner:
 
     def get_snapshot_reason(self, change_type, cluster_id):
         if change_type != "none":
-            return "{} ({})".format(change_type, cluster_id)
+            return f"{change_type} ({cluster_id})"
 
         diff_time_sec = time.time() - self.last_save_time
         if diff_time_sec >= self.config.snapshot_interval_minutes * 60:
@@ -250,7 +250,7 @@ class TemplateMiner:
         param_name_counter = [0]
 
         def get_next_param_name():
-            param_group_name = "p_" + str(param_name_counter[0])
+            param_group_name = f"p_{str(param_name_counter[0])}"
             param_name_counter[0] += 1
             return param_group_name
 
@@ -293,7 +293,7 @@ class TemplateMiner:
             param_group_name = get_next_param_name()
             param_group_name_to_mask_name[param_group_name] = _mask_name
             joined_patterns = "|".join(allowed_patterns)
-            capture_regex = "(?P<{}>{})".format(param_group_name, joined_patterns)
+            capture_regex = f"(?P<{param_group_name}>{joined_patterns})"
             return capture_regex
 
         # For every mask in the template, replace it with a named group of all
@@ -321,5 +321,5 @@ class TemplateMiner:
 
         # match also messages with multiple spaces or other whitespace chars between tokens
         template_regex = re.sub(r"\\ ", r"\\s+", template_regex)
-        template_regex = "^" + template_regex + "$"
+        template_regex = f"^{template_regex}$"
         return template_regex, param_group_name_to_mask_name

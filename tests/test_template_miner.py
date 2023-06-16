@@ -17,7 +17,7 @@ class TemplateMinerTest(unittest.TestCase):
 
     def test_load_config(self):
         config = TemplateMinerConfig()
-        config.load(dirname(__file__) + "/drain3_test.ini")
+        config.load(f"{dirname(__file__)}/drain3_test.ini")
         self.assertEqual(1024, config.drain_max_clusters)
         self.assertListEqual(["_"], config.drain_extra_delimiters)
         self.assertEqual(7, len(config.masking_instructions))

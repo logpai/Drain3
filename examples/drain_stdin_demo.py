@@ -39,7 +39,7 @@ else:
     persistence = None
 
 config = TemplateMinerConfig()
-config.load(dirname(__file__) + "/drain3.ini")
+config.load(f"{dirname(__file__)}/drain3.ini")
 config.profiling_enabled = False
 
 template_miner = TemplateMiner(persistence, config)
@@ -55,7 +55,7 @@ while True:
     print(result_json)
     template = result["template_mined"]
     params = template_miner.extract_parameters(template, log_line)
-    print("Parameters: " + str(params))
+    print(f"Parameters: {str(params)}")
 
 print("Training done. Mined clusters:")
 for cluster in template_miner.drain.clusters:
