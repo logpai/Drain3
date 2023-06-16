@@ -26,7 +26,7 @@ if not os.path.isfile(in_log_file):
 
 
 config = TemplateMinerConfig()
-config.load(dirname(__file__) + "/drain3.ini")
+config.load(f"{dirname(__file__)}/drain3.ini")
 config.profiling_enabled = True
 template_miner = TemplateMiner(config=config)
 
@@ -52,8 +52,8 @@ for line in lines:
         batch_start_time = time.time()
     if result["change_type"] != "none":
         result_json = json.dumps(result)
-        logger.info(f"Input ({line_count}): " + line)
-        logger.info("Result: " + result_json)
+        logger.info(f"Input ({line_count}): {line}")
+        logger.info(f"Result: {result_json}")
 
 time_took = time.time() - start_time
 rate = line_count / time_took

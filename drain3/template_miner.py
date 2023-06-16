@@ -51,12 +51,12 @@ class TemplateMiner:
 
         self.persistence_handler = persistence_handler
 
-        param_str = self.config.mask_prefix + "*" + self.config.mask_suffix
+        param_str = f"{self.config.mask_prefix}*{self.config.mask_suffix}"
 
         # Follow the configuration in the configuration file to instantiate Drain
         # target_obj will be "Drain" if the engine argument is not specified.
         target_obj = self.config.engine
-        if target_obj not in ["Drain","JaccardDrain"]:
+        if target_obj not in ["Drain", "JaccardDrain"]:
             raise ValueError(f"Invalid matched_pattern: {target_obj}, must be either 'Drain' or 'JaccardDrain'")
 
         self.drain = globals()[target_obj](
@@ -104,8 +104,8 @@ class TemplateMiner:
         self.drain.clusters_counter = loaded_drain.clusters_counter
         self.drain.root_node = loaded_drain.root_node
 
-        logger.info("Restored {0} clusters built from {1} messages".format(
-            len(loaded_drain.clusters), loaded_drain.get_total_cluster_size()))
+        logger.info(f"Restored {len(loaded_drain.clusters)} clusters "
+                    f"built from {loaded_drain.get_total_cluster_size()} messages")
 
     def save_state(self, snapshot_reason):
         state = jsonpickle.dumps(self.drain, keys=True).encode('utf-8')
@@ -119,7 +119,7 @@ class TemplateMiner:
 
     def get_snapshot_reason(self, change_type, cluster_id):
         if change_type != "none":
-            return "{} ({})".format(change_type, cluster_id)
+            return f"{change_type} ({cluster_id})"
 
         diff_time_sec = time.time() - self.last_save_time
         if diff_time_sec >= self.config.snapshot_interval_minutes * 60:
@@ -246,11 +246,11 @@ class TemplateMiner:
 
     @cachedmethod(lambda self: self.parameter_extraction_cache)
     def _get_template_parameter_extraction_regex(self, log_template: str, exact_matching: bool):
-        param_group_name_to_mask_name = dict()
+        param_group_name_to_mask_name = {}
         param_name_counter = [0]
 
         def get_next_param_name():
-            param_group_name = "p_" + str(param_name_counter[0])
+            param_group_name = f"p_{str(param_name_counter[0])}"
             param_name_counter[0] += 1
             return param_group_name
 
@@ -293,7 +293,7 @@ class TemplateMiner:
             param_group_name = get_next_param_name()
             param_group_name_to_mask_name[param_group_name] = _mask_name
             joined_patterns = "|".join(allowed_patterns)
-            capture_regex = "(?P<{}>{})".format(param_group_name, joined_patterns)
+            capture_regex = f"(?P<{param_group_name}>{joined_patterns})"
             return capture_regex
 
         # For every mask in the template, replace it with a named group of all
@@ -321,5 +321,5 @@ class TemplateMiner:
 
         # match also messages with multiple spaces or other whitespace chars between tokens
         template_regex = re.sub(r"\\ ", r"\\s+", template_regex)
-        template_regex = "^" + template_regex + "$"
+        template_regex = f"^{template_regex}$"
         return template_regex, param_group_name_to_mask_name
