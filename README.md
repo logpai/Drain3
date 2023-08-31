@@ -122,7 +122,7 @@ Primary configuration parameters:
 
 - `[DRAIN]/sim_th` - similarity threshold. if percentage of similar tokens for a log message is below this number, a new
   log cluster will be created (default 0.4)
-- `[DRAIN]/depth` - max depth levels of log clusters. Minimum is 2. (default 4)
+- `[DRAIN]/depth` - max depth levels of log clusters. Minimum is 3. (default 4)
 - `[DRAIN]/max_children` - max number of children of an internal node (default 100)
 - `[DRAIN]/max_clusters` - max number of tracked clusters (unlimited by default). When this number is reached, model
   starts replacing old clusters with a new ones according to the LRU cache eviction policy.
