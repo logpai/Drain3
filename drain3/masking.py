@@ -2,7 +2,7 @@
 
 import abc
 import re
-from typing import Collection, Optional
+from typing import cast, Collection, Dict, List
 
 
 class AbstractMaskingInstruction(abc.ABC):
@@ -29,7 +29,7 @@ class MaskingInstruction(AbstractMaskingInstruction):
         self.regex = re.compile(pattern)
 
     @property
-    def pattern(self):
+    def pattern(self) -> str:
         return self.regex.pattern
 
     def mask(self, content: str, mask_prefix: str, mask_suffix: str) -> str:
@@ -48,10 +48,11 @@ class LogMasker:
         self.mask_prefix = mask_prefix
         self.mask_suffix = mask_suffix
         self.masking_instructions = masking_instructions
-        self.mask_name_to_instructions = {}
+        mask_name_to_instructions: Dict[str, List[AbstractMaskingInstruction]] = {}
         for mi in self.masking_instructions:
-            self.mask_name_to_instructions.setdefault(mi.mask_with, [])
-            self.mask_name_to_instructions[mi.mask_with].append(mi)
+            mask_name_to_instructions.setdefault(mi.mask_with, [])
+            mask_name_to_instructions[mi.mask_with].append(mi)
+        self.mask_name_to_instructions = mask_name_to_instructions
 
     def mask(self, content: str) -> str:
         for mi in self.masking_instructions:
@@ -62,8 +63,8 @@ class LogMasker:
     def mask_names(self) -> Collection[str]:
         return self.mask_name_to_instructions.keys()
 
-    def instructions_by_mask_name(self, mask_name: str) -> Optional[Collection[AbstractMaskingInstruction]]:
-        return self.mask_name_to_instructions.get(mask_name, [])
+    def instructions_by_mask_name(self, mask_name: str) -> Collection[AbstractMaskingInstruction]:
+        return cast(Collection[AbstractMaskingInstruction], self.mask_name_to_instructions.get(mask_name, []))
 
 # Some masking examples
 # ---------------------

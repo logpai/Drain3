@@ -2,6 +2,8 @@
 # This file implements the Drain algorithm for log parsing.
 # Based on https://github.com/logpai/logparser/blob/master/logparser/Drain/Drain.py by LogPAI team
 
+from typing import Optional, Sequence, Tuple
+
 from drain3.drain import DrainBase, LogCluster, Node
 
 
@@ -12,7 +14,11 @@ class JaccardDrain(DrainBase):
     Drain that uses Jaccard similarity to match log messages.
     """
 
-    def tree_search(self, root_node: Node, tokens: list, sim_th: float, include_params: bool):
+    def tree_search(self,
+                    root_node: Node,
+                    tokens: Sequence[str],
+                    sim_th: float,
+                    include_params: bool) -> Optional[LogCluster]:
         # at first level, children are grouped by token (The first word in tokens)
         token_count = len(tokens)
         # cur_node = root_node.key_to_child_node.get(str(token_count))
@@ -60,7 +66,7 @@ class JaccardDrain(DrainBase):
 
         return cluster
 
-    def add_seq_to_prefix_tree(self, root_node, cluster: LogCluster):
+    def add_seq_to_prefix_tree(self, root_node: Node, cluster: LogCluster) -> None:
         token_count = len(cluster.log_template_tokens)
         # Determine if the string is empty
         if not cluster.log_template_tokens:
@@ -141,7 +147,7 @@ class JaccardDrain(DrainBase):
             current_depth += 1
 
     # seq1 is a template, seq2 is the log to match
-    def get_seq_distance(self, seq1: tuple, seq2: list, include_params: bool):
+    def get_seq_distance(self, seq1: Sequence[str], seq2: Sequence[str], include_params: bool) -> Tuple[float, int]:
         # Jaccard index, It is used to measure the similarity of two sets.
         # The closer its value is to 1, the more common members the two sets have, and the higher the similarity.
 
@@ -174,7 +180,7 @@ class JaccardDrain(DrainBase):
         return ret_val, param_count
 
     # seq1:tonkens->list seq2:template->tuple
-    def create_template(self, seq1: list, seq2: tuple):
+    def create_template(self, seq1: Sequence[str], seq2: Sequence[str]) -> Sequence[str]:
 
         inter_set = set(seq1) & set(seq2)
 
@@ -188,14 +194,14 @@ class JaccardDrain(DrainBase):
         # param_str is updated at the new position with different length
         else:
             # Take the template with long length
-            ret_val = seq1 if len(seq1) > len(seq2) else list(seq2)
+            ret_val = list(seq1) if len(seq1) > len(seq2) else list(seq2)
             for i, token in enumerate(ret_val):
                 if token not in inter_set:
                     ret_val[i] = self.param_str
 
         return ret_val
 
-    def match(self, content: str, full_search_strategy="never"):
+    def match(self, content: str, full_search_strategy: str = "never") -> Optional[LogCluster]:
 
         assert full_search_strategy in ["always", "never", "fallback"]
 
@@ -203,7 +209,7 @@ class JaccardDrain(DrainBase):
         required_sim_th = 0.8
         content_tokens = self.get_content_as_tokens(content)
 
-        def full_search():
+        def full_search() -> Optional[LogCluster]:
             all_ids = self.get_clusters_ids_for_seq_len(content_tokens[0])
             cluster = self.fast_match(all_ids, content_tokens, required_sim_th, include_params=True)
             return cluster
