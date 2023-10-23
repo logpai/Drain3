@@ -257,3 +257,18 @@ class DrainTest(unittest.TestCase):
         c: LogCluster = model.match("nothing")
         self.assertIsNone(c)
 
+    def test_create_template(self):
+        model = Drain(param_str="*")
+
+        seq1 = ["aa", "bb", "dd"]
+        seq2 = ["aa", "bb", "cc"]
+
+        # test for proper functionality
+        template = model.create_template(seq1, seq2)
+        self.assertListEqual(["aa", "bb", "*"], template)
+
+        template = model.create_template(seq1, seq1)
+        self.assertListEqual(seq1, template)
+
+        # Test for equal lengths input vectors
+        self.assertRaises(AssertionError, model.create_template, seq1, ["aa"])
