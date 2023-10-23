@@ -375,16 +375,12 @@ class Drain(DrainBase):
         Loop through two sequences and create a template sequence that
         replaces unmatched tokens with the parameter string.
 
-        for i, (token1, token2) in enumerate(zip(seq1, seq2)):
-            if token1 != token2:
-                ret_val[i] = self.param_str
         :param seq1: first sequence
         :param seq2: second sequence
         :return: template sequence with param_str in place of unmatched tokens
         """
-        param_str = self.param_str # local variable access is faster than instance variable access
         assert len(seq1) == len(seq2)
-        return [token2 if token1 == token2 else param_str for token1, token2 in zip(seq1, seq2)]
+        return [token2 if token1 == token2 else self.param_str for token1, token2 in zip(seq1, seq2)]
 
     def match(self, content: str, full_search_strategy="never"):
         """
