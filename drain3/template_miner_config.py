@@ -4,31 +4,32 @@ import ast
 import configparser
 import json
 import logging
+from typing import Collection, Optional
 
-from drain3.masking import MaskingInstruction
+from drain3.masking import AbstractMaskingInstruction, MaskingInstruction
 
 logger = logging.getLogger(__name__)
 
 
 class TemplateMinerConfig:
-    def __init__(self):
+    def __init__(self) -> None:
         self.engine = "Drain"
         self.profiling_enabled = False
         self.profiling_report_sec = 60
         self.snapshot_interval_minutes = 5
         self.snapshot_compress_state = True
-        self.drain_extra_delimiters = []
+        self.drain_extra_delimiters: Collection[str] = []
         self.drain_sim_th = 0.4
         self.drain_depth = 4
         self.drain_max_children = 100
-        self.drain_max_clusters = None
-        self.masking_instructions = []
+        self.drain_max_clusters: Optional[int] = None
+        self.masking_instructions: Collection[AbstractMaskingInstruction] = []
         self.mask_prefix = "<"
         self.mask_suffix = ">"
         self.parameter_extraction_cache_capacity = 3000
         self.parametrize_numeric_tokens = True
 
-    def load(self, config_filename: str):
+    def load(self, config_filename: str) -> None:
         parser = configparser.ConfigParser()
         read_files = parser.read(config_filename)
         if len(read_files) == 0:
@@ -70,8 +71,8 @@ class TemplateMinerConfig:
                                               fallback=str(self.masking_instructions))
         self.mask_prefix = parser.get(section_masking, 'mask_prefix', fallback=self.mask_prefix)
         self.mask_suffix = parser.get(section_masking, 'mask_suffix', fallback=self.mask_suffix)
-        self.parameter_extraction_cache_capacity = parser.get(section_masking, 'parameter_extraction_cache_capacity',
-                                                              fallback=self.parameter_extraction_cache_capacity)
+        self.parameter_extraction_cache_capacity = parser.getint(section_masking, 'parameter_extraction_cache_capacity',
+                                                                 fallback=self.parameter_extraction_cache_capacity)
 
         masking_instructions = []
         masking_list = json.loads(masking_instructions_str)

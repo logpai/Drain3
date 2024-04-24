@@ -50,7 +50,9 @@ redis=[
 ]
 
 [tool.poetry.group.dev.dependencies]
-
+mypy = "*"
+types-cachetools = "*"
+types-redis = "*"
 
 [build-system]
 requires = ["poetry-core"]

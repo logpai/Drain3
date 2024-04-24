@@ -5,13 +5,12 @@ import logging
 import re
 import time
 import zlib
-from typing import Optional, List, NamedTuple
+from typing import Optional, Mapping, MutableMapping, NamedTuple, Sequence, Tuple, Union
 
-import jsonpickle
+import jsonpickle  # type: ignore[import]
 from cachetools import LRUCache, cachedmethod
 
-from drain3.drain import Drain, LogCluster
-from drain3.jaccard_drain import JaccardDrain
+from drain3.drain import Drain, DrainBase, LogCluster
 from drain3.masking import LogMasker
 from drain3.persistence_handler import PersistenceHandler
 from drain3.simple_profiler import SimpleProfiler, NullProfiler, Profiler
@@ -28,8 +27,8 @@ ExtractedParameter = NamedTuple("ExtractedParameter", [("value", str), ("mask_na
 class TemplateMiner:
 
     def __init__(self,
-                 persistence_handler: PersistenceHandler = None,
-                 config: TemplateMinerConfig = None):
+                 persistence_handler: Optional[PersistenceHandler] = None,
+                 config: Optional[TemplateMinerConfig] = None):
         """
         Wrapper for Drain with persistence and masking support
         :param persistence_handler: The type of persistence to use. When None, no persistence is applied.
@@ -59,7 +58,7 @@ class TemplateMiner:
         if target_obj not in ["Drain", "JaccardDrain"]:
             raise ValueError(f"Invalid matched_pattern: {target_obj}, must be either 'Drain' or 'JaccardDrain'")
 
-        self.drain = globals()[target_obj](
+        self.drain: DrainBase = globals()[target_obj](
             sim_th=self.config.drain_sim_th,
             depth=self.config.drain_depth,
             max_children=self.config.drain_max_children,
@@ -71,14 +70,17 @@ class TemplateMiner:
         )
 
         self.masker = LogMasker(self.config.masking_instructions, self.config.mask_prefix, self.config.mask_suffix)
-        self.parameter_extraction_cache = LRUCache(self.config.parameter_extraction_cache_capacity)
+        self.parameter_extraction_cache: MutableMapping[Tuple[str, bool], str] = \
+            LRUCache(self.config.parameter_extraction_cache_capacity)
         self.last_save_time = time.time()
 
         if persistence_handler is not None:
             self.load_state()
 
-    def load_state(self):
+    def load_state(self) -> None:
         logger.info("Checking for saved state")
+
+        assert self.persistence_handler is not None
 
         state = self.persistence_handler.load_state()
         if state is None:
@@ -96,7 +98,7 @@ class TemplateMiner:
         if len(loaded_drain.id_to_cluster) > 0 and isinstance(next(iter(loaded_drain.id_to_cluster.keys())), str):
             loaded_drain.id_to_cluster = {int(k): v for k, v in list(loaded_drain.id_to_cluster.items())}
             if self.config.drain_max_clusters:
-                cache = LRUCache(maxsize=self.config.drain_max_clusters)
+                cache: MutableMapping[int, Optional[LogCluster]] = LRUCache(maxsize=self.config.drain_max_clusters)
                 cache.update(loaded_drain.id_to_cluster)
                 loaded_drain.id_to_cluster = cache
 
@@ -107,7 +109,9 @@ class TemplateMiner:
         logger.info(f"Restored {len(loaded_drain.clusters)} clusters "
                     f"built from {loaded_drain.get_total_cluster_size()} messages")
 
-    def save_state(self, snapshot_reason):
+    def save_state(self, snapshot_reason: str) -> None:
+        assert self.persistence_handler is not None
+
         state = jsonpickle.dumps(self.drain, keys=True).encode('utf-8')
         if self.config.snapshot_compress_state:
             state = base64.b64encode(zlib.compress(state))
@@ -117,7 +121,7 @@ class TemplateMiner:
                     f"reason: {snapshot_reason}")
         self.persistence_handler.save_state(state)
 
-    def get_snapshot_reason(self, change_type, cluster_id):
+    def get_snapshot_reason(self, change_type: str, cluster_id: int) -> Optional[str]:
         if change_type != "none":
             return f"{change_type} ({cluster_id})"
 
@@ -127,7 +131,7 @@ class TemplateMiner:
 
         return None
 
-    def add_log_message(self, log_message: str) -> dict:
+    def add_log_message(self, log_message: str) -> Mapping[str, Union[str, int]]:
         self.profiler.start_section("total")
 
         self.profiler.start_section("mask")
@@ -137,7 +141,7 @@ class TemplateMiner:
         self.profiler.start_section("drain")
         cluster, change_type = self.drain.add_log_message(masked_content)
         self.profiler.end_section("drain")
-        result = {
+        result: Mapping[str, Union[str, int]] = {
             "change_type": change_type,
             "cluster_id": cluster.cluster_id,
             "cluster_size": cluster.size,
@@ -157,7 +161,7 @@ class TemplateMiner:
         self.profiler.report(self.config.profiling_report_sec)
         return result
 
-    def match(self, log_message: str, full_search_strategy="never") -> LogCluster:
+    def match(self, log_message: str, full_search_strategy: str = "never") -> Optional[LogCluster]:
         """
         Mask log message and match against an already existing cluster.
         Match shall be perfect (sim_th=1.0).
@@ -181,7 +185,7 @@ class TemplateMiner:
         matched_cluster = self.drain.match(masked_content, full_search_strategy)
         return matched_cluster
 
-    def get_parameter_list(self, log_template: str, log_message: str) -> List[str]:
+    def get_parameter_list(self, log_template: str, log_message: str) -> Sequence[str]:
         """
         Extract parameters from a log message according to a provided template that was generated
         by calling `add_log_message()`.
@@ -201,7 +205,7 @@ class TemplateMiner:
     def extract_parameters(self,
                            log_template: str,
                            log_message: str,
-                           exact_matching: bool = True) -> Optional[List[ExtractedParameter]]:
+                           exact_matching: bool = True) -> Optional[Sequence[ExtractedParameter]]:
         """
         Extract parameters from a log message according to a provided template that was generated
         by calling `add_log_message()`.
@@ -245,17 +249,19 @@ class TemplateMiner:
         return extracted_parameters
 
     @cachedmethod(lambda self: self.parameter_extraction_cache)
-    def _get_template_parameter_extraction_regex(self, log_template: str, exact_matching: bool):
+    def _get_template_parameter_extraction_regex(self,
+                                                 log_template: str,
+                                                 exact_matching: bool) -> Tuple[str, Mapping[str, str]]:
         param_group_name_to_mask_name = {}
         param_name_counter = [0]
 
-        def get_next_param_name():
+        def get_next_param_name() -> str:
             param_group_name = f"p_{str(param_name_counter[0])}"
             param_name_counter[0] += 1
             return param_group_name
 
         # Create a named group with the respective patterns for the given mask-name.
-        def create_capture_regex(_mask_name):
+        def create_capture_regex(_mask_name: str) -> str:
             allowed_patterns = []
             if exact_matching:
                 # get all possible regex patterns from masking instructions that match this mask name
@@ -263,9 +269,9 @@ class TemplateMiner:
                 for mi in masking_instructions:
                     # MaskingInstruction may already contain named groups.
                     # We replace group names in those named groups, to avoid conflicts due to duplicate names.
-                    if hasattr(mi, 'regex'):
+                    if hasattr(mi, 'regex') and hasattr(mi, 'pattern'):
                         mi_groups = mi.regex.groupindex.keys()
-                        pattern = mi.pattern
+                        pattern: str = mi.pattern
                     else:
                         # non regex masking instructions - support only non-exact matching
                         mi_groups = []
@@ -274,7 +280,7 @@ class TemplateMiner:
                     for group_name in mi_groups:
                         param_group_name = get_next_param_name()
 
-                        def replace_captured_param_name(param_pattern):
+                        def replace_captured_param_name(param_pattern: str) -> str:
                             _search_str = param_pattern.format(group_name)
                             _replace_str = param_pattern.format(param_group_name)
                             return pattern.replace(_search_str, _replace_str)
