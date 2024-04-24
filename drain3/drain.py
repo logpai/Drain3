@@ -72,7 +72,7 @@ class DrainBase(ABC):
         """
         Create a new Drain instance.
 
-        :param depth: max depth levels of log clusters. Minimum is 2.
+        :param depth: max depth levels of log clusters. Minimum is 3.
             For example, for depth==4, Root is considered depth level 1.
             Token count is considered depth level 2.
             First log token is considered depth level 3.
