@@ -413,14 +413,16 @@ class Drain(DrainBase):
         return ret_val, param_count
 
     def create_template(self, seq1: Sequence[str], seq2: Sequence[str]) -> Sequence[str]:
+        """
+        Loop through two sequences and create a template sequence that
+        replaces unmatched tokens with the parameter string.
+        
+        :param seq1: first sequence
+        :param seq2: second sequence
+        :return: template sequence with param_str in place of unmatched tokens
+        """
         assert len(seq1) == len(seq2)
-        ret_val = list(seq2)
-
-        for i, (token1, token2) in enumerate(zip(seq1, seq2)):
-            if token1 != token2:
-                ret_val[i] = self.param_str
-
-        return ret_val
+        return [token2 if token1 == token2 else self.param_str for token1, token2 in zip(seq1, seq2)]
 
     def match(self, content: str, full_search_strategy: str = "never") -> Optional[LogCluster]:
         """
